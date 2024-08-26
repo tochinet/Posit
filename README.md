@@ -8,20 +8,12 @@ Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are
 
 Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Setting some bits in the extension selects intermediate additional numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors", hence in posit4,0 arithmetic, 4+4 is 4 and 0.5/4 is 0.25. 
 
+No code was coped from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and roundingà, coming to conclusion that *rounding to nearest even* was likely too complex to pursue on Arduino, and many other pages on the Internet.
+
 This library is a work in progress, don't hesitate if you want to contribute. It also is my first experience in creating an Arduino library, so expect errors and mistakes, and help correct them. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/) as much as I can.
-
-While no code is directly coming from any reference, some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), section IV of https://arxiv.org/pdf/2308.03425 paper for help on division algorithms and rounding, coming to conclusion that rounding to nearest even was likely too complex to pursue.
-
 As all WIP, expect many, frequent and breaking changes. Remember this is also a way for me to learn.
 
-DONE 1 : creation of .h, .cpp, README.md, ... files
-DONE 2 : Posit8 constructor from raw byte/unsigned char
-DONE 3 : Conversion of Posit8 (es=0) to float (32 bits)
-DONE 4 : creation of Posit8 constructor from float
-DONE 5 : creation of Posit8 constructor from int (16 bit)
-DONE 5 : implementation of Posit8 add, sub, mul and div
-TODO 6 : overload of + - * / operators
-Step 7 : put on Github
+Stil TODO : overload of + - * / operators, making division work, ...
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
