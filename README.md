@@ -1,4 +1,4 @@
-##Posit Library for Arduino
+## Posit Library for Arduino
 
 This is an C/C++ library for posit8 and posit16 floating point arithmetic support in Arduino.
 
@@ -35,6 +35,7 @@ Expressing -10.5 in float requires the following steps :
 Here the float representation is 0b1\10000010\01010000000000000000000. 
 
 Funny enough many simple reals cannot be expressed exactly. For example 0.1 is 0 01111011 10011001100110011001101 (positive, power -4, mantissa 1.6000000238418579). There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two zeros (+0 is all zeros and -0 is 100..)
+
 ### Posit float representation
 The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits dependin on the es parameter.
 
