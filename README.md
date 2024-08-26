@@ -29,12 +29,12 @@ The standard Arduino library supports one type of floating point numbers, 32-bit
 
 Expressing -10.5 in float requires the following steps :
 1. coding the absolute value in binary (1010.1)
-2. finding the power of 2 (3)
+2. finding the power of 2 (3) and add 127 (total 130)
 3. coding the sign, the exponent and the mantissa
 
-Here the float representation is 0b1\10000010\01010000000000000000000. 
+Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 0000 0000 0000 0000 (with exponent bits bold and italicized). 
 
-Funny enough many simple reals cannot be expressed exactly. For example 0.1 is 0 01111011 10011001100110011001101 (positive, power -4, mantissa 1.6000000238418579). There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two zeros (+0 is all zeros and -0 is 100..)
+Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two different zeros (+0 is all zeros and -0 is 1 followed by all zeros)
 
 ### Posit float representation
 The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits dependin on the es parameter.
