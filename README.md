@@ -8,12 +8,14 @@ Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are
 
 Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Setting some bits in the extension selects intermediate additional numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors", hence in posit4,0 arithmetic, 4+4 is 4 and 0.5/4 is 0.25. 
 
-No code was coped from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and roundingà, coming to conclusion that *rounding to nearest even* was likely too complex to pursue on Arduino, and many other pages on the Internet.
+No code was coped from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and rounding, leading to the conclusion that *rounding to nearest even* is not worth pursuing on Arduino, and many other pages on the Internet (Quora, Stack Overflow, etc.).
 
 This library is a work in progress, don't hesitate if you want to contribute. It also is my first experience in creating an Arduino library, so expect errors and mistakes, and help correct them. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/) as much as I can.
 As all WIP, expect many, frequent and breaking changes. Remember this is also a way for me to learn.
 
-Stil TODO : overload of + - * / operators, making division work, ...
+Today, it is possible to create posit8,0 (no  exponent bit) from raw signed byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, substract and multiply posits.
+
+Still TODO : overload of + - * / operators, making division work, previous/next, posit16, ...
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
