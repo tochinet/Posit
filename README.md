@@ -1,10 +1,10 @@
-This is a library for posit8 and posit16 support in Arduino.
-
 ##Posit Library for Arduino
+
+This is an C/C++ library for posit8 and posit16 floating point arithmetic support in Arduino.
 
 [Posit Arithmetic](https://posithub.org/docs/Posits4.pdf) was invented by John Gustafson. It is an alternative floating point format to IEEE 754 that promises a more efficient and balanced precision, especially useful for AI. Small posit numbers hare increased precision, while exact representation of big numbers are coarser. The [Posit Standard](https://posithub.org/docs/posit_standard-2.pdf) was released in 2022 and defines the storage format, operation behavior and required mathematical functions for Posits. It differs in some design choices from previous publications, and is only partially covered here, since not all decisions are equally applicable to the Arduino environment.
 
-Posits can be any size from 2 to 32 bits or even more. Very small sizes are useful to understand the concept : posit2 (2 bits) can express zero, one, minus one and infinity. A 3-bit posit will also be able to express +/- 2 and +/- 0.5 (if es=0). Posit4 (again with zeroed es parameter) adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. Adding one or more exponent bits extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
+Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are considered in this library.
 
 Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Setting some bits in the extension selects intermediate additional numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors", hence in posit4,0 arithmetic, 4+4 is 4 and 0.5/4 is 0.25. 
 
@@ -24,7 +24,7 @@ TODO 6 : overload of + - * / operators
 Step 7 : put on Github
 
 ## Some explanations on Floats and Posits.
-
+### IEEE 754 float representation
 The standard Arduino library supports one type of floating point numbers, 32-bit IEEE 754. This is the most common standard for floating point calculations. A float consist of one bit sign (like signed integers), 8 bits exponent (power of two, biased by adding 127), and 23 bits of mantissa (the bits after the "1", that is not coded). There is no inversion of bits (2's complement) like for signed integers.
 
 Expressing -10.5 in float requires the following steps :
@@ -35,3 +35,7 @@ Expressing -10.5 in float requires the following steps :
 Here the float representation is 0b1\10000010\01010000000000000000000. 
 
 Funny enough many simple reals cannot be expressed exactly. For example 0.1 is 0 01111011 10011001100110011001101 (positive, power -4, mantissa 1.6000000238418579). There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two zeros (+0 is all zeros and -0 is 100..)
+### Posit float representation
+The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits dependin on the es parameter.
+
+Very small sizes are useful to understand the concept : posit2 (2 bits) can express zero, one, minus one and infinity. A 3-bit posit will also be able to express +/- 2 and +/- 0.5 (if es=0). Posit4 (again with zeroed es parameter) adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. Adding one or more exponent bits extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
