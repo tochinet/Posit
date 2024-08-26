@@ -346,7 +346,7 @@ Posit8 posit_mul(Posit8 a, Posit8 b) {
     return Posit8(tempResult);
   }
 
-Posit8 posit_div(Posit8 a, Posit8 b) {
+Posit8 posit_div(Posit8 a, Posit8 b) { // not working yet
     boolean aSign,bSign;
     boolean abigNum,bbigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aexponent=-1,bexponent = -1; 
