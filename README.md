@@ -36,4 +36,7 @@ The posit concept adds one extra variable-length field ("regime") between the si
 <center><img src="posit_standard_format.png">
 General Posit Format (from standard file)
 </center>
-Very small sizes are useful to understand the concept : posit2 (2 bits) can express zero, one, minus one and infinity. A 3-bit posit will also be able to express +/- 2 and +/- 0.5 (if es=0). Posit4 (again with zeroed es parameter) adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. Adding one or more exponent bits extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
+
+Very small posit sizes are useful to understand the concept : posit2 (2 bits) can obviously only express 4 values. Ther are zero, one, minus one, and infinity. Adding one bit inserts one value between each value already in the set. So 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
+
+The number of exponent bits between the regime and the mantissa field extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
