@@ -31,6 +31,9 @@ Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 000
 Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two different zeros (+0 is all zeros and -0 is 1 followed by all zeros)
 
 ### Posit float representation
-The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits dependin on the es parameter.
+The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter.
 
+<center><img src="posit_standard_format.png">
+General Posit Format (from standard file)
+</center>
 Very small sizes are useful to understand the concept : posit2 (2 bits) can express zero, one, minus one and infinity. A 3-bit posit will also be able to express +/- 2 and +/- 0.5 (if es=0). Posit4 (again with zeroed es parameter) adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. Adding one or more exponent bits extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
