@@ -16,7 +16,7 @@ As all WIP, expect many, frequent and breaking changes. Remember this is also a 
 
 Today, the library allows to create posit8,0 objects (no  exponent bit) from raw signed byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits but ... long is the road.
 
-Planned is coming iterations : overload of + - * / operators, previous/next, exponents in posit8, posit16, square root, ...
+Planned in coming iterations : overload of + - * / operators, previous/next, exponents in posit8, posit16, square root, ...
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
