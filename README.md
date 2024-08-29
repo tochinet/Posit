@@ -34,7 +34,7 @@ Funny enough many simple reals cannot be expressed exactly. For example 0.1 is r
 The major invention in the posit format was to add one extra variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter.
 
 <p align="center"><img src="posit_standard_format.png"><br>
-General Posit Format (from Posit Standard(2022))
+Fig.1 : General Posit Format (from Posit Standard(2022))
 </p>
 
 Examples of very small posit numbers make it easier to understand the concept: posit2 (2 bits) can obviously only express 4 values. These are zero, one, minus one, and infinity. Each time a bit is added, one value is inserted between each value already in the set. So a 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
