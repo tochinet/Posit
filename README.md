@@ -32,7 +32,7 @@ Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 000
 Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. IEEE 754 also defines some exceptions such as +/- infinity (exponent 255, mantissa all zeros), two different zeros (+0 is all zeros and -0 is 1 followed by all zeros), subnormal numbers (very small), and different representations of Not a Number (NAN).
 
 ### Posit float representation
-The major invention in the posit format was to add one extra variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter.
+The major invention in the posit format was to add one extra variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and the first different bit marks the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter. The posit standard imposes es=2.
 
 <p align="center"><img src="posit_standard_format.png"><br>
 Fig.1 : General Posit Format (from Posit Standard(2022))
@@ -48,5 +48,6 @@ The number of exponent bits between the regime and the mantissa field extends th
 The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
 This has several implications :
 - Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist.
-- While the absence of overflow looks like a positive aspect of posits, but underflow to zero is likely desirable for IoT applications etc.
+- Posit8,0 is the first supported format although Posit8,2 is what the standard recommends. This is justified by simplicity.
+- While the absence of overflow looks like a positive aspect of posits, but underflow to zero is likely desirable for IoT applications etc. Numbers smaller than 1E-6 (1ppm) are rounded down to zero by default, but this is parametrizable by defining ESPILON in your sketch before including the library.
 - Rounding towards zero is preferred to "Rounding to nearest even" because it comes with no added complexity.
