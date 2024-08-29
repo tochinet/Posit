@@ -43,3 +43,10 @@ Precision extension (for example from 8 to 16 bits) can be done simply by adding
 Examples of very small posit numbers make it easier to understand the concept: posit2 (2 bits) can obviously only express 4 values. These are zero, one, minus one, and infinity. Each time a bit is added, one value is inserted between each value already in the set. So a 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
 
 The number of exponent bits between the regime and the mantissa field extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
+
+### (Assumed) deviations from Standard
+The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
+This has several implications :
+- Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist.
+- While the absence of overflow looks like a positive aspect of posits, but underflow to zero is likely desirable for IoT applications etc.
+- Rounding towards zero is preferred to "Rounding to nearest even" because it comes with no added complexity.
