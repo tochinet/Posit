@@ -28,15 +28,15 @@ Expressing -10.5 in float requires the following steps :
 
 Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 0000 0000 0000 0000 (with exponent bits bold and italicized). 
 
-Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. There are also some special cases such as +/- infinity (exponent 255, mantissa all zeros) and two different zeros (+0 is all zeros and -0 is 1 followed by all zeros)
+Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. IEEE 754 also defines some exceptions such as +/- infinity (exponent 255, mantissa all zeros), two different zeros (+0 is all zeros and -0 is 1 followed by all zeros), subnormal numbers (very small), and different representations of Not a Number (NAN).
 
 ### Posit float representation
-The posit concept adds one extra variable-length field ("regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter.
+The major invention in the posit format was to add one extra variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and a different bit makes the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter.
 
-<center><img src="posit_standard_format.png">
-General Posit Format (from standard file)
-</center>
+<p align="center"><img src="posit_standard_format.png"><br>
+General Posit Format (from Posit Standard(2022))
+</p>
 
-Very small posit sizes are useful to understand the concept : posit2 (2 bits) can obviously only express 4 values. Ther are zero, one, minus one, and infinity. Adding one bit inserts one value between each value already in the set. So 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
+Examples of very small posit numbers make it easier to understand the concept: posit2 (2 bits) can obviously only express 4 values. These are zero, one, minus one, and infinity. Each time a bit is added, one value is inserted between each value already in the set. So a 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
 
 The number of exponent bits between the regime and the mantissa field extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
