@@ -1,7 +1,12 @@
+/* Sketch to test posit library
+ *
+ *
+ */
+#define ES8 2 // number of bits in exponent field (default zero)
 #include "Posit.h"
 
 char cs[80]; // C string for table
-double numbersList[16]= {0,NAN,1.0,2.0,3.0,4.0,7.0,10.0,15.0,25.0,33.0,0.5,0.12,0.05,0.005,0.0001};
+double numbersList[16]= {0,NAN,1.0,2.0,3.0,7.0,11.0,12.0,50.0,333.0,0.5,0.12,0.05,0.005,0.0001};
 
 void setup() {
   Serial.begin(9600);
@@ -32,11 +37,11 @@ void setup() {
   Serial.print("First(");
   Serial.print(firstPosit.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(firstPosit));
+  Serial.println(posit2float(firstPosit),4);
   Serial.print("Second(");
   Serial.print(secondPosit.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(secondPosit)); //*/
+  Serial.println(posit2float(secondPosit),4); //*/
 
   Serial.println("Test of operations");  
   Posit8 sum = Posit8::posit8_add(firstPosit, secondPosit);
@@ -44,28 +49,28 @@ void setup() {
   Serial.print("Sum(");
   Serial.print(sum.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(sum));
+  Serial.println(posit2float(sum),4);
 
 	Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
   //Posit8 sub = firstPosit - secondPosit;  // doesn"t work yet
   Serial.print("Sub(");
   Serial.print(sub.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(sub)); //*/	
+  Serial.println(posit2float(sub),5); //*/	
   
   Posit8 mul = posit8_mul(firstPosit, secondPosit);  
   //Posit8 mul = firstPosit * secondPosit;  // doesn"t work yet
   Serial.print("Mul(");
   Serial.print(mul.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(mul)); //*/	
+  Serial.println(posit2float(mul),4); //*/	
   
   Posit8 div = posit8_div(firstPosit, secondPosit);  
   //Posit8 div = firstPosit / secondPosit;  // doesn"t work yet
   Serial.print("Div(");
   Serial.print(div.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(div)); //*/
+  Serial.println(posit2float(div),5); //*/
 
   randomSeed(millis());
   char as[10],bs[10];
