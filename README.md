@@ -2,11 +2,12 @@
 
 This is an C/C++ library for posit8 and posit16 floating point arithmetic support in Arduino.
 
-[Posit Arithmetic](https://posithub.org/docs/Posits4.pdf) was invented by John Gustafson. It is an alternative floating point format to IEEE 754 that promises a more efficient and balanced precision, especially useful for AI. Small posit numbers hare increased precision, while exact representation of big numbers are coarser. The [Posit Standard](https://posithub.org/docs/posit_standard-2.pdf) was released in 2022 and defines the storage format, operation behavior and required mathematical functions for Posits. It differs in some design choices from previous publications, and is only partially covered here, since not all decisions are equally applicable to the Arduino environment.
+[Posit Arithmetic](https://posithub.org/docs/Posits4.pdf) was invented by John Gustafson. It is an alternative floating point format to IEEE 754 that promises a more efficient and balanced precision, especially useful for AI. 
+Smaller posit numbers have increased precision, while big numbers in the set of error-free representation are coarser. 
+The [Posit Standard](https://posithub.org/docs/posit_standard-2.pdf) was released in 2022 and defines the storage format, operation behavior and required mathematical functions for Posits. 
+It differs in some design choices from previous publications on posit arithmetic, and is only partially covered here, since not all decisions are equally applicable to the Arduino environment.
 
-Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are considered in this library, and only the ATmega368 is targeted (UNO etc.).
-
-
+Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are considered in this library, and only the ATmega368 is targeted (UNO etc.), since 32-bit architectures often have hardware acceleration for IEEE floats.
 
 No code was copied from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and rounding, leading to the conclusion that *rounding to nearest even* is not likely worth pursuing on Arduino), and from many other pages on the Internet (Quora, Stack Overflow, etc.).
 
@@ -14,9 +15,9 @@ No code was copied from any existing work, but some inspiration came from the [S
 This library is a work in progress, and my first experience in creating an Arduino library _and_ publishing on GitHub, so expect errors and mistakes, stupid or not, and don't hesitate to contribute and propose correction and ameliorations. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/). 
 As with all WIP, expect many, frequent and breaking changes. Remember this is also a way for me to learn.
 
-Today, the library allows to create posit8,0 objects (no  exponent bit) from raw signed byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits but ... long is the road.
+Today, the library allows to create posit8 objects (both with 0 and 2 exponent bits) from raw unsigned byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits. Code for posit16 objects is under development.
 
-Planned in coming iterations : overload of + - * / operators, previous/next, exponents in posit8, posit16, square root, ...
+Planned in coming iterations : overload of + - * / operators, previous/next, square root, ...
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
@@ -44,10 +45,10 @@ Examples of very small posit numbers make it easier to understand the concept: p
 
 The number of exponent bits between the regime and the mantissa field extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives).
 
-### (Assumed) deviations from Standard
+### (Assumed) deviations from the standard
 The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
 This has several implications :
 - Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist.
-- Posit8,0 is the first supported format although Posit8,2 is what the standard recommends. This is justified by simplicity.
-- While the absence of overflow looks like a positive aspect of posits, but underflow to zero is likely desirable for IoT applications etc. Numbers smaller than 1E-6 (1ppm) are rounded down to zero by default, but this is parametrizable by defining ESPILON in your sketch before including the library.
-- Rounding towards zero is preferred to "Rounding to nearest even" because it comes with no added complexity.
+- Posit8,0 was the first supported format although Posit8,2 is what the standard recommends. Both are now covered.
+- The absence of overflow is a positive aspect of posits. However, underflow to zero is likely desirable for IoT applications etc. Hence the library will rounded down posits smaller than 1E-6 (1ppm) to zero by default. This is parametrizable by defining ESPILON in your sketch before including the library.
+- Rounding towards zero is preferred to "Rounding to nearest even" because it comes with much lower complexity (no guard bits). Beware that this means that 64.0 - 0.5 = 32.0. 
