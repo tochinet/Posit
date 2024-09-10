@@ -33,13 +33,15 @@ Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 000
 Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. IEEE 754 also defines some exceptions such as +/- infinity (exponent 255, mantissa all zeros), two different zeros (+0 is all zeros and -0 is 1 followed by all zeros), subnormal numbers (very small), and different representations of Not a Number (NAN).
 
 ### Posit float representation
-The major invention in the posit format was to add one extra variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and the first different bit marks the end of the regime field. In addition, the (fixed) number of exponent bits is considered an externally defined parameter. This means there are multiple, incompatible versions of posits depending on the es parameter. The posit standard imposes es=2.
+The major invention in the posit format was to add one additional variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and the first different bit marks the end of the regime field. The (fixed) number of exponent bits ("E" field in the picture, also called "es" bits) was an externally defined parameter. This means there were multiple, incompatible versions of posits, depending on the es parameter. To remove that caveat, the posit standard imposes es=2 for all sizes. However, the library supports both Posit8,0 (no exponent field) and Posit8,2.
 
 <p align="center"><img src="posit_standard_format.png"><br>
 Fig.1 : General Posit Format (from Posit Standard(2022))
 </p>
 
-Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors", hence in posit4,0 arithmetic, 4+4 is 4 and 0.5/4 is 0.25. 
+Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors". 
+For example, in posit8,2 arithmetic, 1024+224 is ... 1024 and there are no numbers expressed between 16384 and 32768. 
+There are also as many numbers bigger than one than smaller than one.
 
 Examples of very small posit numbers make it easier to understand the concept: posit2 (2 bits) can obviously only express 4 values. These are zero, one, minus one, and infinity. Each time a bit is added, one value is inserted between each value already in the set. So a 3-bit posit will also be able to express exactly +/- 2 and +/- 0.5 (assuming es=0, see further). Posit4 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. 
 
@@ -49,6 +51,5 @@ The number of exponent bits between the regime and the mantissa field extends th
 The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
 This has several implications :
 - Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist.
-- Posit8,0 was the first supported format although Posit8,2 is what the standard recommends. Both are now covered.
 - The absence of overflow is a positive aspect of posits. However, underflow to zero is likely desirable for IoT applications etc. Hence the library will rounded down posits smaller than 1E-6 (1ppm) to zero by default. This is parametrizable by defining ESPILON in your sketch before including the library.
 - Rounding towards zero is preferred to "Rounding to nearest even" because it comes with much lower complexity (no guard bits). Beware that this means that 64.0 - 0.5 = 32.0. 
