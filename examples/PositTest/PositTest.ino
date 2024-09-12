@@ -14,7 +14,7 @@ void setup() {
 
   /*Serial.println("Creation of all posit8 values from raw integer");  
   for (int raw = 0; raw<256 ; raw ++) {
-    Posit8 rawPosit ((uint8_t)raw); // signed byte since posit are signed
+    Posit8 rawPosit ((uint8_t)raw);
     Serial.print("Raw8 : "); Serial.print(rawPosit.value, BIN);
     Serial.print(" "); Serial.println(posit2float(rawPosit),7);
   } 
@@ -22,7 +22,7 @@ void setup() {
  
  /*Serial.println("Creation of many posit16 values from raw integer");  
   for (long raw = 0; raw<65535 ; raw += sqrt(random(50000))) {
-    Posit16 rawPosit ((uint16_t)raw); // signed byte since posit are signed
+    Posit16 rawPosit ((uint16_t)raw);
     Serial.print("Raw16 : "); Serial.print(rawPosit.value, BIN);
     Serial.print(" "); Serial.println(posit2float(rawPosit),12);
   } 
