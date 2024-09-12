@@ -59,7 +59,7 @@ void setup() {
   Serial.print(") ");
   Serial.println(posit2float(sum),4);
 
-	//Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
+  //Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
   Posit8 sub = firstPosit - secondPosit;  // doesn"t work yet
   Serial.print("Sub(");
   Serial.print(sub.value, BIN);
@@ -90,6 +90,7 @@ void setup() {
   while (Serial.available() == 0) { 
   }
   Posit16 secondP16 (Serial.parseFloat());
+  while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   
   Serial.print("First(");
   Serial.print(firstP16.value, BIN);
@@ -102,28 +103,28 @@ void setup() {
 
   Serial.println("Test of operations");  
   Posit16 sum16 = Posit16::posit16_add(firstP16, secondP16);
-  //Posit16 sum = firstP16 + secondP16;  // doesn't work yet
+  //Posit16 sum = firstP16 + secondP16;
   Serial.print("Sum(");
   Serial.print(sum16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sum16),10);
 
   Posit16 sub16 = Posit16::posit16_sub(firstP16, secondP16);
-  //Posit16 sub16 = firstP16 - secondP16;  // doesn't work yet
+  //Posit16 sub16 = firstP16 - secondP16;
   Serial.print("Sub(");
   Serial.print(sub16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sub16),10); 
 
   Posit16 mul16 = Posit16::posit16_mul(firstP16, secondP16);
-  //Posit16 sum = firstP16 + secondP16;  // doesn't work yet
+  //Posit16 sum = firstP16 * secondP16;
   Serial.print("Mul(");
   Serial.print(mul16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(mul16),10);
 
   Posit16 div16 = Posit16::posit16_div(firstP16, secondP16);
-  //Posit16 sub16 = firstP16 - secondP16;  // doesn't work yet
+  //Posit16 sub16 = firstP16 / secondP16;
   Serial.print("Div(");
   Serial.print(div16.value, BIN);
   Serial.print(") ");
@@ -138,7 +139,7 @@ void setup() {
       Posit8 firstPosit=Posit8(numbersList[random(16)]); 
       Posit8 secondPosit=Posit8(numbersList[random(16)]); 
       Posit8 sum = Posit8::posit8_add(firstPosit, secondPosit);
-    	Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
+      Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
       Posit8 mul = Posit8::posit8_mul(firstPosit, secondPosit);  
       Posit8 div = Posit8::posit8_div(firstPosit, secondPosit); 
 
@@ -167,11 +168,11 @@ void setup() {
       Posit16 firstPosit=Posit16(numbersList[random(16)]); 
       Posit16 secondPosit=Posit16(numbersList[random(16)]); 
       //Posit16 sum = Posit16::posit16_add(firstPosit, secondPosit);
-    	//Posit16 sub = Posit16::posit16_sub(firstPosit, secondPosit);  
+      //Posit16 sub = Posit16::posit16_sub(firstPosit, secondPosit);  
       //Posit16 mul = Posit16::posit16_mul(firstPosit, secondPosit);  
       //Posit16 div = Posit16::posit16_div(firstPosit, secondPosit); 
-    	Posit16 sum = firstPosit + secondPosit;
-    	Posit16 sub = firstPosit - secondPosit;  
+      Posit16 sum = firstPosit + secondPosit;
+      Posit16 sub = firstPosit - secondPosit;  
       Posit16 mul = firstPosit * secondPosit;  
       Posit16 div = firstPosit / secondPosit; 
 
@@ -231,14 +232,14 @@ void loop() { // Nothing here if not uncommented
   Serial.println(posit2float(sub16),15);
 
   Posit16 mul16 = Posit16::posit16_mul(firstP16, secondP16);
-  //Posit16 sum = firstP16 + secondP16;
+  //Posit16 mul16 = firstP16 + secondP16;
   Serial.print("Mul(");
   Serial.print(mul16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(mul16),15);
 
   Posit16 div16 = Posit16::posit16_div(firstP16, secondP16);
-  //Posit16 sub16 = firstP16 - secondP16;
+  //Posit16 div16 = firstP16 - secondP16;
   Serial.print("Div(");
   Serial.print(div16.value, BIN);
   Serial.print(") ");
