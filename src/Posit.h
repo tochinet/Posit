@@ -732,7 +732,7 @@ class Posit16 {
       }
     }
     return Posit16(tempResult);
-  }
+  } // end of posit8_div function definition
 
   // Operator overloading for Posit16
   Posit16 operator + (const Posit16 & other) const {
