@@ -197,7 +197,7 @@ class Posit8 {
     // Methods for posit8 arithmetic
     static Posit8 posit8_add(Posit8 a, Posit8 b) { // better as externalized function ?
       boolean aSign, bSign;
-      boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+      boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
       int8_t aExponent, bExponent;
       uint8_t aMantissa, bMantissa, esBits;
       int8_t bitCount; // posit bit counter
@@ -211,7 +211,7 @@ class Posit8 {
       //ppositSplit(a, &aSign, &aBigNum, &aExponent, &aMantissa);
       //Serial.print("exponent after "); Serial.println(aExponent); // NOK here, always -1
       positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-      positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+      positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
       // align smaller number
       if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
@@ -286,33 +286,11 @@ class Posit8 {
       return posit8_add(a, b); // temp solution to compile
     }
 
-    // Operator overloading for Posit8
-    Posit8 operator+(const Posit8& other) const;
-    Posit8 operator-(const Posit8& other) const;
-    Posit8 operator*(const Posit8& other) ;
-    Posit8 operator/(const Posit8& other) ;
 
-    /*Posit8 Posit8::operator+(const Posit8& other) const {
-      return posit8_add(this->value, other.value); // doesn't compile
-      }
-
-      Posit8 Posit8::operator-(const Posit8& other) const {
-      return Posit8(posit8_sub(this->value,  other.value);
-      } //*/
-
-    Posit8 Posit8::operator*( const Posit8& other) const {
-      return posit8_sub(this->value,  other.value); // Compiles but doesn't work
-    }
-
-    /*Posit8 Posit8::operator/(const Posit8& other) const {
-      return Posit8(posit8_div(this->value,  other.value));
-      } //*/
-
-}; //*/ end of Posit8 Class definition
 
 static Posit8 posit8_mul(Posit8 a, Posit8 b) { // external function, needed for operator overloading ?
   boolean aSign, bSign;
-  boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+  boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
   int8_t aExponent = -1, bExponent = -1;
   uint8_t aMantissa = 0, bMantissa = 0, esBits;
   int8_t bitCount; // posit bit counter
@@ -325,7 +303,7 @@ static Posit8 posit8_mul(Posit8 a, Posit8 b) { // external function, needed for 
 
   // Split posit into constituents
   Posit8::positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-  Posit8::positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+  Posit8::positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
   // xor signs, add exponents, multiply mantissas
   if (aSign ^ bSign) tempResult = 0x80;
@@ -386,7 +364,7 @@ static Posit8 posit8_mul(Posit8 a, Posit8 b) { // external function, needed for 
 
 Posit8 posit8_div(Posit8 a, Posit8 b) {
   boolean aSign, bSign;
-  boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+  boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
   int8_t aExponent, bExponent;
   uint8_t aMantissa, bMantissa, esBits;
   int8_t bitCount = 5; // posit bit counter
@@ -396,7 +374,7 @@ Posit8 posit8_div(Posit8 a, Posit8 b) {
   if (a.value == 0 || a.value == 0x80 || b.value == 0x40) return a; // a==0 or NaR, b==1.0
 
   Posit8::positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-  Posit8::positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+  Posit8::positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
   // xor signs, sub exponents, div mantissas
   if (aSign ^ bSign) tempResult = 0x80;
@@ -454,6 +432,34 @@ Posit8 posit8_div(Posit8 a, Posit8 b) {
   return Posit8(tempResult);
 }
 
+ 
+
+    // Operator overloading for Posit8
+    //Posit8 operator+(const Posit8& other) const;
+    //Posit8 operator-(const Posit8& other) const;
+    Posit8 Posit8::operator*(const Posit8& other) const {
+      return posit8_mul(*this, other);
+      }
+
+    Posit8 Posit8::operator/(const Posit8& other) const; //*/
+    Posit8 Posit8::operator/(const Posit8& other)  {
+      return posit8_div(*this, other);
+      } //*/
+
+
+    Posit8 Posit8::operator+(const Posit8& other) const {
+      return posit8_add(*this, other); // doesn't compile
+      }
+
+    Posit8 Posit8::operator-(const Posit8& other) const {
+      return posit8_sub(*this, other);
+      } //*/
+
+
+
+}; //*/ end of Posit8 Class definition
+
+
 class Posit16 {
   private:
     //uint16_t value; // moved to public since used by posit2float
@@ -471,10 +477,10 @@ class Posit16 {
 
       this->value = 0;
       if (v < 0) {      // negative numbers
-        //if (v >= -EPSILON) return; // no undeflow for Posit16
-        this->value += 128 * 256; // set sign and continue
+        if (v >= -EPSILON*EPSILON) return; // no underflow for Posit16
+        this->value += 0x8000; // set sign and continue
       } else { // v>=0
-        //if (v <= EPSILON) return;
+        if (v <= EPSILON*EPSILON) return;
       }
       if (isnan(v)) {
         this->value = 0x8000; // NaR
@@ -483,7 +489,7 @@ class Posit16 {
       tempValue.tempFloat = v;
       tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
       int8_t tempExponent = tempValue.tempBytes[3] - 127;
-      sprintf(s, "exp=%02x mant=%02x%02x%02x", tempExponent, tempValue.tempBytes[2],
+      /*sprintf(s, "exp=%02x mant=%02x%02x%02x", tempExponent, tempValue.tempBytes[2],
               tempValue.tempBytes[1], tempValue.tempBytes[0]); Serial.println(s); //*/
 
       // separate ES8 lsbs in separate es field
@@ -501,8 +507,8 @@ class Posit16 {
         while (tempExponent++ < 0 && bitCount-- > 0) ; // do nothing, bits are already zero
         this->value |= (1 << bitCount--); // terminating bit is 1
       }
-      Serial.print (" bC("); Serial.print (bitCount); Serial.print (") ");
-      Serial.print (" es("); Serial.print (esBits); Serial.print (") ");
+      /*Serial.print (" bC("); Serial.print (bitCount); Serial.print (") ");
+      Serial.print (" es("); Serial.print (esBits); Serial.print (") "); //*/
 
       //Serial.println(bitCount);
       if (bitCount >= 0 && ES16 == 2) { // still space for exp msb
@@ -513,7 +519,6 @@ class Posit16 {
         if (esBits & 1) this->value |= (1 << bitCount);
         bitCount--;
       }
-      Serial.println(bitCount);
 
       if (bitCount >= 0) { // still space for mantissa
         int8_t mantissacount = 1;
@@ -535,8 +540,8 @@ class Posit16 {
 
     static positSplit(Posit16& p, boolean& sign, boolean& bigNum, int8_t& exponent, uint16_t& mantissa) {
       int8_t bitCount; // posit bit counter for regime, exp and mantissa
-      Serial.print("Splitting "); Serial.print(p.value, BIN); Serial.print(" : ");
-      sign = (p.value & 128 * 256);
+      //Serial.print("Splitting "); Serial.print(p.value, BIN); Serial.print(" : ");
+      sign = (p.value & 0x8000);
       exponent = -(1 << ES16) ; // negative exponents start at -1/-2/-4;
       // Note: "exponent" means power of 2, "exp" means exponent bits outside regime
       if (bigNum = (p.value & 64 * 256)) exponent = 0; // boolean assignment inside test;
@@ -546,7 +551,7 @@ class Posit16 {
       //first extract exponent from regime bits
       while ((p.value & (1 << bitCount)) == ((bigNum) << bitCount--)) { // still regime
         if (bigNum) exponent += 1 << ES16; else exponent -= 1 << ES16 ; // add/sub 2^es for each bit in regime
-        Serial.print(exponent); Serial.print(" "); Serial.print(bitCount); Serial.print(", ");
+        //Serial.print(exponent); Serial.print(" "); Serial.print(bitCount); Serial.print(", ");
         if (bitCount == -1) break; // all regime, no space for exponent or mantissa
       }
       // threat exp bits if any, untested
@@ -555,27 +560,27 @@ class Posit16 {
       if (ES16 && (bitCount > -1)) {
         if (p.value & (1 << bitCount)) {
           exponent += ES16; // add one or two to exponent
-          Serial.print ("+ES16 ");
+          //Serial.print ("+ES16 ");
         }
         bitCount--;
       }
       if ((ES16 > 1) && (bitCount > -1)) {
         if (p.value & (1 << bitCount)) {
           exponent += 1; // add one if exp ==0Bx1
-          Serial.print ("+1 ");
+          //Serial.print ("+1 ");
         }
         bitCount--;
       }
       // then treat mantissa bits if any
       (mantissa) = p.value << (6 + 8 - bitCount); // all zeros automatically if none exist
       (mantissa) |= 256 * 128 ; // add implied one;
-      sprintf(s, "sexp=%02x mant=%02x ", exponent, mantissa); Serial.println(s); //*/
+      //sprintf(s, "sexp=%02x mant=%02x ", exponent, mantissa); Serial.println(s); //*/
     } // end of positSplit for Posit16
 
     // Add methods for posit16 arithmetic
     static Posit16 posit16_add(Posit16 a, Posit16 b) {
       boolean aSign, bSign;
-      boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+      boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
       int8_t aExponent, bExponent;
       uint16_t aMantissa, bMantissa;
       uint8_t esBits;
@@ -587,7 +592,7 @@ class Posit16 {
       if (b.value == 0) return a;
 
       positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-      positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+      positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
       // align smaller number
       if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
@@ -607,13 +612,13 @@ class Posit16 {
       /*sprintf(s, "aexp=%02x 1mant=%04x ", aExponent, aMantissa); Serial.print(s);
       sprintf(s, "bexp=%02x 1mant=%04x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%06x ", tempExponent, tempMantissa); Serial.print(s); //*/
-      Serial.println(tempMantissa); // Still OK here
+      //Serial.println(tempMantissa); // Still OK here
 
       // handle sign of result
       if (tempMantissa < 0L) {
         tempResult |= 32768;
         tempMantissa = - tempMantissa; // 2's complement
-        sprintf(s, "-"); Serial.print(s);
+        //sprintf(s, "-"); Serial.print(s);
       }
       if (tempMantissa == 0) return Posit16((uint16_t)0);
 
@@ -668,52 +673,53 @@ class Posit16 {
 
     static Posit16 posit16_sub(Posit16 a, Posit16 b) {
       if (a.value == 0x8000 || b.value == 0x8000) return Posit16((uint16_t)0x8000);
-      if (b.value != 0) b.value = b.value ^ 32768; // change sign, except for zero (NaR)
+      if (b.value != 0) b.value = b.value ^ 0x8000; // change sign, except for zero (NaR)
       return posit16_add(a, b); // temp solution to compile
     }
 
     static Posit16 posit16_mul(Posit16 a, Posit16 b) {
       boolean aSign, bSign;
-      boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+      boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
       int8_t aExponent, bExponent;
       uint16_t aMantissa, bMantissa;
       uint8_t esBits;
       int8_t bitCount; // posit bit counter
-      uint16_t tempResult;
+      uint16_t tempResult = 0;
 
-      if ((a.value == 0 && b.value != 0x8000) || a.value == 0x80) return a; // 0, NaR
+      if ((a.value == 0 && b.value != 0x8000) || a.value == 0x8000) return a; // 0, NaR
       if (b.value == 0 || b.value == 0x8000) return b;
       if (a.value == 0x4000) return b;
       if (b.value == 0x4000) return a;
 
       // Split posit into constituents
       positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-      positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+      positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
       // xor signs, add exponents, multiply mantissas
       if (aSign ^ bSign) tempResult = 0x8000;
       int tempExponent = (aExponent + bExponent);
-      uint16_t tempMantissa = ((uint16_t)aMantissa * bMantissa) >> 6; // puts result in LSB and eliminates msb
-      /*sprintf(s, "aexp=%02x mant=%02x ", aExponent, aMantissa); Serial.print(s);
-        sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
-        sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
+      uint32_t tempMantissa = ((uint32_t)aMantissa * bMantissa) >> 14; // puts result in lower 16 bits and eliminates msb
+      /*sprintf(s, "aexp=%02x mant=%04x ", aExponent, aMantissa); Serial.print(s);
+      sprintf(s, "bexp=%02x mant=%04x ", bExponent, bMantissa); Serial.println(s);
+      Serial.print(((uint32_t)aMantissa * bMantissa)>>14,HEX);
+      sprintf(s, "sexp=%02x mant=%06x ", tempExponent, (uint32_t)tempMantissa); Serial.println(s); //*/
 
       // normalise mantissa
-      while (tempMantissa > 0xFFFFL) {
+      if (tempMantissa > 0x1FFFFL) {
         tempExponent++; // add power of two if product carried to MSB
         tempMantissa >>= 1; // eliminate uncoded msb otherwise (same exponent or less)
       }
       while (tempMantissa < 0x10000L) { // if msb not reached, possible?
         tempExponent--; // divide by two
         tempMantissa <<= 1; // eliminate msb uncoded
-        //Serial.println("ERROR? : MSB is zero"); //*/
-      }
-      //sprintf(s, "sexp=%02x mant=%02x ", tempExponent, tempMantissa); Serial.print(s);
+        Serial.println("ERROR? : MSB is zero"); 
+      }//*/
+      //sprintf(s, "sexp=%02x mant=%04x ", tempExponent, tempMantissa); Serial.print(s);
 
       esBits = tempExponent & ((1 << ES16) - 1);
       tempExponent >>= ES16;
 
-      // Write regimebits
+      // Write regime field
       bitCount = 14; // start of regime
       if (tempExponent >= 0) { // positive exponent, regime bits are 1
         while (tempExponent-- >= 0 && bitCount >= 0) { // es=0 assumed
@@ -727,7 +733,7 @@ class Posit16 {
         tempResult |= (1 << bitCount--); // terminating 1
         //sprintf(s, "0reg %02x, bitCount %02 ", tempResult, bitCount); Serial.print(s); //*/
       }
-
+      // Write exponent field
       if (bitCount >= 0 && ES16 == 2) { // still space for exp and/or mantissa, handle exp first
         if (esBits & 2) tempResult |= (1 << bitCount);
         bitCount--;
@@ -736,11 +742,13 @@ class Posit16 {
         if (esBits & 1) tempResult |= (1 << bitCount);
         bitCount--;
       }
+      // Write mantissa field
       if (bitCount >= 0) { // still space for mantissa
-        int8_t mantissacount = 1;
-        while (bitCount-- >= 0) {
-          if (tempMantissa & (1 << (16 - mantissacount++))) // from bit15 till end of space
-            tempResult |= (1 << (bitCount + 1));
+        uint8_t mantissaCount = 1;
+        while (bitCount >= 0) {
+          if (tempMantissa & (uint16_t)(1 << (16 - mantissaCount++))){ // from bit15 till end of space
+            tempResult |= (1 << bitCount);}
+          bitCount--; 
         }
       }
       return Posit16(tempResult);
@@ -748,7 +756,7 @@ class Posit16 {
 
     static Posit16 posit16_div(Posit16 a, Posit16 b) {
       boolean aSign, bSign;
-      boolean aBigNum, bbigNum; // 0 between 0 and 1, 1 otherwise
+      boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
       int8_t aExponent, bExponent;
       uint16_t aMantissa, bMantissa;
       uint8_t esBits;
@@ -759,7 +767,7 @@ class Posit16 {
       if (a.value == 0 || a.value == 0x8000 || b.value == 0x4000) return a; // a==0 or NaR, b==1.0
 
       positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-      positSplit(b, bSign, bbigNum, bExponent, bMantissa);
+      positSplit(b, bSign, bBigNum, bExponent, bMantissa);
 
       // xor signs, sub exponents, div mantissas
       if (aSign ^ bSign) tempResult = 0x8000;
@@ -773,8 +781,8 @@ class Posit16 {
       tempValue.tempFloat = ((float)aMantissa / (float)bMantissa); // result should be between 0.5 and 2
       //Serial.print (tempValue.tempFloat);
 
-      tempValue.tempInt <<= 1; // eliminate sign, align exponent and mantissa
-      uint8_t tempMantissa = tempValue.tempBytes[2]; // eliminate msb
+      tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
+      uint16_t tempMantissa = tempValue.tempBytes[2]*256+tempValue.tempBytes[1]; // eliminate msb
       tempExponent += tempValue.tempBytes[3] - 127;
       //sprintf(s, " mant=%02x ", tempMantissa); Serial.print(s); //*/
       /*sprintf(s, "aexp=%02x mant=%02x ", aExponent, aMantissa); Serial.print(s);
