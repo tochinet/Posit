@@ -6,7 +6,7 @@
 #include "Posit.h"
 
 char cs[80]; // C string for table
-double numbersList[16]= {0,NAN,1.0,-2.0,3.0,7.0,-11.0,12.0,50.0,-333.0,0.5,NAN,-0.05,0.005,0.01};
+double numbersList[16]= {0,NAN,1.0,-2.0,3.0,7.0,-11.0,12.0,50.0,-333.0,0.5,0.09,-0.05,0.005,0.0001};
 
 void setup() {
   Serial.begin(9600);
@@ -162,8 +162,8 @@ void setup() {
 
   Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
-  Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
-  Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
+  Serial.println("    A    :    B    :     abin    :     bbin    :    sum    :    sub    :    mul    :    div");
+  Serial.println("---------+---------+-------------+-------------+-----------+-----------+-----------+-----------");
   for (int j=0; j<16; j++) {
       Posit16 firstPosit=Posit16(numbersList[random(16)]); 
       Posit16 secondPosit=Posit16(numbersList[random(16)]); 
@@ -176,21 +176,21 @@ void setup() {
       Posit16 mul = firstPosit * secondPosit;  
       Posit16 div = firstPosit / secondPosit; 
 
-      Serial.print(posit2float(firstPosit),3); // No way to align numbers in table
+      Serial.print(posit2float(firstPosit),5); // No way to align numbers in table
       Serial.print(" + ");
-      Serial.print(posit2float(secondPosit),3);
+      Serial.print(posit2float(secondPosit),5);
       Serial.print(" + ");
       Serial.print(firstPosit.value,BIN);
       Serial.print(" + ");
       Serial.print(secondPosit.value,BIN);
       Serial.print(" + ");
-      Serial.print(posit2float(sum),3);
+      Serial.print(posit2float(sum),5);
       Serial.print(" + ");
-      Serial.print(posit2float(sub),3);
+      Serial.print(posit2float(sub),5);
       Serial.print(" + ");
-      Serial.print(posit2float(mul),3);
+      Serial.print(posit2float(mul),5);
       Serial.print(" + ");
-      Serial.println(posit2float(div),3);
+      Serial.println(posit2float(div),5);
     } //*/  
 }
 
