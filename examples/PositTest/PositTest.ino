@@ -132,7 +132,6 @@ void setup() {
 
   Serial.println("Table of 16 random Posit 8 results"); 
   randomSeed(millis());
-  char as[10],bs[10];
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
   for (int j=0; j<16; j++) {
@@ -162,7 +161,6 @@ void setup() {
 
   Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
-  char as[10],bs[10];
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
   for (int j=0; j<16; j++) {
