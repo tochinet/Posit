@@ -15,9 +15,10 @@ No code was copied from any existing work, but some inspiration came from the [S
 This library is a work in progress, and my first experience in creating an Arduino library _and_ publishing on GitHub, so expect errors and mistakes, stupid or not, and don't hesitate to contribute and propose correction and ameliorations. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/). 
 As with all WIP, expect many, frequent and breaking changes. Remember this is also a way for me to learn.
 
-Today, the library allows to create posit8 objects (both with 0 and 2 exponent bits) from raw unsigned byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits. Code for posit16 objects is still under test, but should be working. Overloading of operators is a WIP.
+Today, the library allows to create posit8 objects (both with 0 and 2 exponent bits) and posit16,2 objects from raw unsigned byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits. 
 
-Planned in coming iterations : overload of + - * / operators, previous/next, square root, ...
+Planned in coming iterations : prior/next, square root, comparisons, overloading of comparisons and += etc. operators, refactoring ...
+Maybe a better way to round operations will sneak in if it doesn't break the simplicity rule.
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
