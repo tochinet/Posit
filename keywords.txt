@@ -9,10 +9,14 @@ Posit16	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 posit2float	KEYWORD2
-posit_add	KEYWORD2
-posit_sub	KEYWORD2
-posit_mul	KEYWORD2
-posit_div	KEYWORD2
+posit8_add	KEYWORD2
+posit8_sub	KEYWORD2
+posit8_mul	KEYWORD2
+posit8_div	KEYWORD2
+posit16_add	KEYWORD2
+posit16_sub	KEYWORD2
+posit16_mul	KEYWORD2
+posit16_div	KEYWORD2
 
 #######################################
 # Literals (LITERAL1)
