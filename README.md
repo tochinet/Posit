@@ -52,5 +52,5 @@ The number of exponent bits, in the field between the regime and the mantissa, e
 The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
 This has several implications :
 - Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist in Arduino.
-- The absence of overflow is a positive aspect of posits. However, underflow to zero is likely desirable for IoT applications etc. Hence the library will round down posits smaller than 1E-6 (1ppm) to zero by default. This is parametrizable by defining ESPILON in your sketch before including the library.
+- The absence of overflow is a positive aspect of posits. However, underflow to zero is likely desirable for IoT applications etc. Hence the library will round down posits smaller than 1E-6 (1ppm) to zero by default for Posit8, and its square 1E-12 for Posit16. This is parametrizable by defining ESPILON in your sketch before including the library.
 - Rounding towards zero is preferred to "Rounding to nearest even" because it comes with much lower complexity (no guard/round/sticky bits to process). Beware that this means that 64.0 - 0.5 = 32.0. 
