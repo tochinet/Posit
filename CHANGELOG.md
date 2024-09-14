@@ -1,9 +1,13 @@
-## Posit 0.1.1 - 2024.10.xx planned extra features
+## Posit 0.1.2 - 2024.10.xx planned extra features
 
 * operator overloading for +=, -=, *=, /=
-* Posit16 - Posit8 translations
+* Posit16 <-> Posit8 translations
 * more functions such as next/prior, sqrt, ...
-* better rounding (with compiler option)
+* maybe better rounding (with compiler option)
+
+## Posit 0.1.1 - 2024.09.15
+
+* Correction to meet Arduino library contribution rules
 
 ## Posit 0.1.0 - 2024.09.12
 
