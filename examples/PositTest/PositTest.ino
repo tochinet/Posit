@@ -1,18 +1,26 @@
 /* Sketch to test posit library
  *
+ * Contains several test scenarios that can easily be commented out or uncommented
+ * - Creation of several posits from raw values and printing of float conversions
+ * - Creation of two posits from Serial input and test of four operations (+overloading)
+ * - Creation of tables (poorly aligned) of 16 randomly chosen pairs of values and printing of
+ *   the values, BINary content, and 4 operations
  *
+ * The test scenarios are available for both Posit8 and Posit16,2
  */
-#define ES8 2 // number of bits in exponent field (default zero)
+//#define ES8 2 // number of bits in exponent field (default is zero in library)
+//#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
 
 char cs[80]; // C string for table
-double numbersList[16]= {0,NAN,1.0,-2.0,3.0,7.0,-11.0,12.0,50.0,-333.0,0.5,0.09,-0.05,0.005,0.0001};
+double numbersList[16]= {0,NAN,1.0,-2.0,3.14159,7.0,-11.0,15.0,50.0,-333.0,0.5,0.09,-0.05,0.005,0.0001};
+// array of floats to choose randomly from for the table test scenarios
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Test of Posit library\n");
 
-  /*Serial.println("Creation of all posit8 values from raw integer");  
+  /**/Serial.println("Creation of all posit8 values from raw integer");  
   for (int raw = 0; raw<256 ; raw ++) {
     Posit8 rawPosit ((uint8_t)raw);
     Serial.print("Raw8 : "); Serial.print(rawPosit.value, BIN);
@@ -133,8 +141,8 @@ void setup() {
 
   Serial.println("Table of 16 random Posit 8 results"); 
   randomSeed(millis());
-  Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
-  Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
+  Serial.println("    A    :    B    :     abin    :     bbin    :    sum    :    sub    :    mul    :    div");
+  Serial.println("---------+---------+-------------+-------------+-----------+-----------+-----------+-----------");
   for (int j=0; j<16; j++) {
       Posit8 firstPosit=Posit8(numbersList[random(16)]); 
       Posit8 secondPosit=Posit8(numbersList[random(16)]); 
@@ -143,27 +151,27 @@ void setup() {
       Posit8 mul = Posit8::posit8_mul(firstPosit, secondPosit);  
       Posit8 div = Posit8::posit8_div(firstPosit, secondPosit); 
 
-      Serial.print(posit2float(firstPosit),3); // No way to align numbers in table
+      Serial.print(posit2float(firstPosit),4); // No way to align numbers in table
       Serial.print(" + ");
-      Serial.print(posit2float(secondPosit),3);
+      Serial.print(posit2float(secondPosit),4);
       Serial.print(" + ");
       Serial.print(firstPosit.value,BIN);
       Serial.print(" + ");
       Serial.print(secondPosit.value,BIN);
       Serial.print(" + ");
-      Serial.print(posit2float(sum),3);
+      Serial.print(posit2float(sum),4);
       Serial.print(" + ");
-      Serial.print(posit2float(sub),3);
+      Serial.print(posit2float(sub),4);
       Serial.print(" + ");
-      Serial.print(posit2float(mul),3);
+      Serial.print(posit2float(mul),4);
       Serial.print(" + ");
-      Serial.println(posit2float(div),3);
+      Serial.println(posit2float(div),4);
     } //*/
 
   Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
-  Serial.println("    A    :    B    :     abin    :     bbin    :    sum    :    sub    :    mul    :    div");
-  Serial.println("---------+---------+-------------+-------------+-----------+-----------+-----------+-----------");
+  Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
+  Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
   for (int j=0; j<16; j++) {
       Posit16 firstPosit=Posit16(numbersList[random(16)]); 
       Posit16 secondPosit=Posit16(numbersList[random(16)]); 
@@ -176,21 +184,21 @@ void setup() {
       Posit16 mul = firstPosit * secondPosit;  
       Posit16 div = firstPosit / secondPosit; 
 
-      Serial.print(posit2float(firstPosit),5); // No way to align numbers in table
+      Serial.print(posit2float(firstPosit),6); // No way to align numbers in table
       Serial.print(" + ");
-      Serial.print(posit2float(secondPosit),5);
+      Serial.print(posit2float(secondPosit),6);
       Serial.print(" + ");
       Serial.print(firstPosit.value,BIN);
       Serial.print(" + ");
       Serial.print(secondPosit.value,BIN);
       Serial.print(" + ");
-      Serial.print(posit2float(sum),5);
+      Serial.print(posit2float(sum),6);
       Serial.print(" + ");
-      Serial.print(posit2float(sub),5);
+      Serial.print(posit2float(sub),6);
       Serial.print(" + ");
-      Serial.print(posit2float(mul),5);
+      Serial.print(posit2float(mul),6);
       Serial.print(" + ");
-      Serial.println(posit2float(div),5);
+      Serial.println(posit2float(div),6);
     } //*/  
 }
 
