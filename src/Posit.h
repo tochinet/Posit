@@ -392,7 +392,7 @@ class Posit8 {
       }
     }
     return Posit8(tempResult);
-  }
+  } // end of posit8_div function definition
 
   // Operator overloading for Posit8
   Posit8 Posit8::operator + (const Posit8 & other) const {
@@ -598,7 +598,7 @@ class Posit16 {
       }
     }
     return Posit16(tempResult);
-  }
+  } // end of posit16_add function definition
 
   static Posit16 posit16_sub(Posit16 a, Posit16 b) {
     if (a.value == 0x8000 || b.value == 0x8000) return Posit16((uint16_t) 0x8000);
@@ -641,7 +641,7 @@ class Posit16 {
       tempExponent--; // divide by two
       tempMantissa <<= 1; // eliminate msb uncoded
       Serial.println("ERROR? : MSB is zero");
-    } //*/
+    }
 
     esBits = tempExponent & ((1 << ES16) - 1);
     tempExponent >>= ES16;
@@ -677,7 +677,7 @@ class Posit16 {
       }
     }
     return Posit16(tempResult);
-  } // end of posit8_mul function definition
+  } // end of posit16_mul function definition
 
   static Posit16 posit16_div(Posit16 a, Posit16 b) {
     boolean aSign, bSign;
@@ -742,7 +742,7 @@ class Posit16 {
       }
     }
     return Posit16(tempResult);
-  }
+  } // end of posit8_div function definition
 
   // Operator overloading for Posit16
   Posit16 operator + (const Posit16 & other) const {
@@ -756,7 +756,7 @@ class Posit16 {
   }
   Posit16 Posit16::operator / (const Posit16 & other) const {
     return posit16_div( * this, other);
-  } //*/
+  }
 };
 
 float posit2float(Posit8 & p) {
@@ -795,7 +795,7 @@ float posit2float(Posit8 & p) {
   tempValue.tempInt >>= 1; // unsigned shift left for IEEE format
   if (sign) return -tempValue.tempFloat;
   return tempValue.tempFloat;
-} // end of posit2float 8-bit*/
+} // end of posit2float 8-bit
 
 float posit2float(Posit16 p) {
   boolean sign = false;
@@ -833,4 +833,4 @@ float posit2float(Posit16 p) {
   tempValue.tempInt >>= 1; // unsigned shift left for IEEE format
   if (sign) return -tempValue.tempFloat;
   return tempValue.tempFloat;
-} // end of posit2float 16-bit*/
+} // end of posit2float 16-bit
