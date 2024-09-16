@@ -8,7 +8,7 @@
  *
  * The test scenarios are available for both Posit8 and Posit16,2
  */
-//#define ES8 2 // number of bits in exponent field (default is zero in library)
+#define ES8 2 // number of bits in exponent field (default is zero in library)
 //#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
 
@@ -37,14 +37,14 @@ void setup() {
   Serial.println(); //*/
 
   /*/Serial.println("Creation of two posit8 values from input strings"); 
-  Serial.println("First Posit? ");
+  Serial.println("First Posit8 ? ");
   while (Serial.available() == 0) {
    }
   float floatValue = Serial.parseFloat();
   Serial.println(floatValue); 
   Posit8 firstPosit (floatValue);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println("Second Posit? ");
+  Serial.println("Second Posit8 ? ");
   while (Serial.available() == 0) { 
   }
   Posit8 secondPosit (Serial.parseFloat());
@@ -88,13 +88,13 @@ void setup() {
   Serial.print(") ");
   Serial.println(posit2float(div),5); //*/
 
-  /**/Serial.println("Creation of two posit16 values from input strings"); 
-  Serial.println("First Posit? ");
+  /*/Serial.println("Creation of two posit16 values from input strings"); 
+  Serial.println("First Posit16 ? ");
   while (Serial.available() == 0) {
    }
   Posit16 firstP16 (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println("Second Posit? ");
+  Serial.println("Second Posit16 ? ");
   while (Serial.available() == 0) { 
   }
   Posit16 secondP16 (Serial.parseFloat());
@@ -139,7 +139,7 @@ void setup() {
   Serial.println(posit2float(div16),10); //*/
   
 
-  Serial.println("Table of 16 random Posit 8 results"); 
+  /**/Serial.println("Table of 16 random Posit 8 results"); 
   randomSeed(millis());
   Serial.println("    A    :    B    :     abin    :     bbin    :    sum    :    sub    :    mul    :    div");
   Serial.println("---------+---------+-------------+-------------+-----------+-----------+-----------+-----------");
@@ -168,7 +168,7 @@ void setup() {
       Serial.println(posit2float(div),4);
     } //*/
 
-  Serial.println("Table of 16 random Posit16 results"); 
+  /**/Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
@@ -204,12 +204,12 @@ void setup() {
 
 void loop() { // Nothing here if not uncommented
   //Serial.println("Creation of two posit16 values from input strings"); 
-  /*Serial.println("First Posit? ");
+  /**/Serial.println("First Posit16 ? ");
   while (Serial.available() == 0) {
    }
   Posit16 firstP16 (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println("Second Posit? ");
+  Serial.println("Second Posit16 ? ");
   while (Serial.available() == 0) { 
   }
   Posit16 secondP16 (Serial.parseFloat());
@@ -225,29 +225,29 @@ void loop() { // Nothing here if not uncommented
   Serial.println(posit2float(secondP16),15); 
 
   Serial.println("Test of operations");  
-  Posit16 sum16 = Posit16::posit16_add(firstP16, secondP16);
-  //Posit16 sum = firstP16 + secondP16;
+  //Posit16 sum16 = Posit16::posit16_add(firstP16, secondP16);
+  Posit16 sum16 = firstP16 + secondP16;
   Serial.print("Sum(");
   Serial.print(sum16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sum16),15);
 
-  Posit16 sub16 = Posit16::posit16_sub(firstP16, secondP16);
-  //Posit16 sub16 = firstP16 - secondP16;
+  //Posit16 sub16 = Posit16::posit16_sub(firstP16, secondP16);
+  Posit16 sub16 = firstP16 - secondP16;
   Serial.print("Sub(");
   Serial.print(sub16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sub16),15);
 
-  Posit16 mul16 = Posit16::posit16_mul(firstP16, secondP16);
-  //Posit16 mul16 = firstP16 + secondP16;
+  //Posit16 mul16 = Posit16::posit16_mul(firstP16, secondP16);
+  Posit16 mul16 = firstP16 + secondP16;
   Serial.print("Mul(");
   Serial.print(mul16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(mul16),15);
 
-  Posit16 div16 = Posit16::posit16_div(firstP16, secondP16);
-  //Posit16 div16 = firstP16 - secondP16;
+  //Posit16 div16 = Posit16::posit16_div(firstP16, secondP16);
+  Posit16 div16 = firstP16 - secondP16;
   Serial.print("Div(");
   Serial.print(div16.value, BIN);
   Serial.print(") ");
