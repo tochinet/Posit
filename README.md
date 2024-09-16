@@ -3,7 +3,7 @@
 This is an C/C++ library for posit8 and posit16 floating point arithmetic support in Arduino.
 
 [Posit Arithmetic](https://posithub.org/docs/Posits4.pdf) was invented by John Gustafson. It is an alternative floating point format to IEEE 754 that promises a more efficient and balanced precision, especially useful for AI. 
-Any number representation system using N bits can represent exactly 2¨n values. All other numbers have to be rounded (up or down). While IEEE 754 numbers have fixed sizes for exponent (power of two) and mantissa (fractional part), hence can express 2^mantissa values between two successive powers of two, posits have a variable length exponent, so they can express exactly more values around +/-1, where more calculations typically take place. 
+Any number representation system using N bits can represent exactly 2^n values. All other numbers have to be rounded (up or down). While IEEE 754 numbers have fixed sizes for exponent (power of two) and mantissa (fractional part), hence can express 2^mantissa values between two successive powers of two, such as between 1 and 2, or between -1/64 and -1/32, posits have a variable length exponent, so they can express without error more values around +/-1, where more calculations typically take place, and are less precise for very big or very small numbers (like 4096 or 1E-6). 
 The [Posit Standard](https://posithub.org/docs/posit_standard-2.pdf) was released in 2022 and defines the storage format, operation behavior and required mathematical functions for Posits. 
 It differs in some design choices from previous publications on posit arithmetic, and is only partially covered here, since not all decisions are equally applicable to the Arduino environment.
 
@@ -18,7 +18,7 @@ As with all WIP, expect many, frequent and breaking changes. Remember this is al
 Today, the library allows to create posit8 objects (both with 0 and 2 exponent bits) and posit16,2 objects from raw unsigned byte, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits. 
 
 Planned in coming iterations : prior/next, square root, comparisons, overloading of comparisons and += etc. operators, refactoring ...
-Maybe a better way to round operations will sneak in if it doesn't break the simplicity rule.
+Maybe a better way to round operations will sneak in if it doesn't break the simplicity rule. Trigonometry functions may also be considered.
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
