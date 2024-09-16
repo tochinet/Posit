@@ -2,14 +2,20 @@
 
   Posit Library for Arduino
 
-  This library provides posit8 and posit16 floating point arithmetic
-  support in the Arduino environment, especially the memory-limited 8-bit AVR boards.
+  This library provides posit8 and posit16 floating point arithmetic support
+  for the Arduino environment, especially the memory-limited 8-bit AVR boards.
   Posits are a more efficient and more precise alternative to IEEE754 floats.
 
   Major design goals are :
-  - Small size, both in program memory and RAM usage
+  - Small size, both in code/program memory and RAM usage
   - Simplicity, restricting the library to 8 and 16 bits posits and +-/* operations
   - Useful, explanatory comments in the library
+
+  As corollary, major non-goals are :
+  - Support for 32bits posits (not enough added value compared with usual floats)
+  - Compliance with the Posit standard (2022)
+  - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
+  - Support of quire (very long accumulator)
 
   Copyright (c) 2024 Christophe Vermeulen
 
@@ -34,20 +40,22 @@
   See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
 
-#ifndef ES8
-#define ES8 0 // No exponent bits in Posit8. Define as 2 in sketch for standard compliance
+#ifndef EPSILON          // Define EPSILON as 0.0 in sketch for standard compliance
+#define EPSILON 0.000001 // results smaller than EPSILON are rounded to zero. 
+#endif
+#ifndef ES8   // Define ES8 as 2 in sketch for standard compliance
+#define ES8 0 // No exponent bits in Posit8. 
 #endif
 #define ES16 2 // Two exponent bits in Posit16, compliant to standard
-#ifndef EPSILON
-#define EPSILON 0.000001 // round to zero below 1ppm. Define as 0.0 for standard compliance
+
+#ifndef NODEBUG
+char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-char s[30]; // temporary C string for Serial debug using sprintf
-struct splitPosit {
-  boolean * sign; // Needs one byte, but compressing inserts lot of code
-  boolean * bigNum;
-  int8_t * exponent;
-  uint8_t * mantissa; // maybe 16 bits to share struct between 8 and 16 bits?
+struct splitPosit { // Not in use yet
+  boolean sign;
+  int8_t exponent; // 2's power, both from/to regime and exp fields
+  uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits?
 };
 
 class Posit8 {
@@ -57,7 +65,7 @@ class Posit8 {
   public: uint8_t value; // first used int8_t, but issues with nar to nan conversion
 
   Posit8(uint8_t raw = 0) { // Construct from raw unsigned byte
-    this -> value = raw;
+    this->value = raw;
   }
   
   #ifdef byte // Exists in Arduino, but not in all C/C++ toolchains
@@ -71,13 +79,12 @@ class Posit8 {
       float tempFloat; // little endian in AVR8
       uint32_t tempInt; // little-endian as well
       uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
-    }
-    tempValue;
+    } tempValue;
 
     this->value = 0;
     if (v < 0) { // negative numbers
       if (v >= -EPSILON) return; // very small neg numbers ~=0, non-standard
-      this -> value += 0x80; // set sign and continue
+      this->value += 0x80; // set sign and continue
     } else { // v>=0
       if (v <= EPSILON) return; // include EPSILON required if EPSILON were zero
     }
@@ -87,7 +94,7 @@ class Posit8 {
     }
     tempValue.tempFloat = v;
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
-    int8_t tempExponent = tempValue.tempBytes[3] - 127;
+    int8_t tempExponent = tempValue.tempBytes[3] - 127; // remove IEEE754 bias
     uint8_t esBits = tempExponent & ((1 << ES8) - 1);
     tempExponent >>= ES8;
 
@@ -133,7 +140,8 @@ class Posit8 {
 
   // Helper method to split a posit into constituents
   // arguments by reference to avoid copy
-  static positSplit(Posit8 & p, boolean & sign, boolean & bigNum, int8_t & exponent, uint8_t & mantissa) {
+  static positSplit(Posit8 & p, boolean & sign, int8_t & exponent, uint8_t & mantissa) {
+    boolean bigNum;
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
  
     sign = (p.value & 128);
@@ -179,8 +187,8 @@ class Posit8 {
     if (a.value == 0) return b;
     if (b.value == 0) return a;
 
-    positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    positSplit(a, aSign, aExponent, aMantissa);
+    positSplit(b, bSign, bExponent, bMantissa);
 
     // align smaller number
     if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
@@ -260,8 +268,8 @@ class Posit8 {
     if (b.value == 0x40) return a; // a*1
 
     // Split posit into constituents
-    positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    positSplit(a, aSign, aExponent, aMantissa);
+    positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, add exponents, multiply mantissas
     if (aSign ^ bSign) tempResult = 0x80;
@@ -321,14 +329,14 @@ class Posit8 {
     boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa, esBits;
-    int8_t bitCount = 5; // posit bit counter
+    int8_t bitCount; // posit bit counter
     uint8_t tempResult = 0;
 
     if (b.value == 0x80 || b.value == 0) return Posit8((uint8_t) 0x80); // NaR if /0 or /NaR
     if (a.value == 0 || a.value == 0x80 || b.value == 0x40) return a; // a==0 or NaR, b==1.0
 
-    Posit8::positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    Posit8::positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    Posit8::positSplit(a, aSign, aExponent, aMantissa);
+    Posit8::positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, sub exponents, div mantissas
     if (aSign ^ bSign) tempResult = 0x80;
@@ -338,15 +346,14 @@ class Posit8 {
       float tempFloat; // little endian in AVR8
       uint32_t tempInt; // little-endian as well
       uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
-    }
-    tempValue;
+    } tempValue;
+
     tempValue.tempFloat = ((float) aMantissa / (float) bMantissa); // result should be between 0.5 and 2
-    //Serial.print (tempValue.tempFloat);
 
     tempValue.tempInt <<= 1; // eliminate sign, align exponent and mantissa
     uint8_t tempMantissa = tempValue.tempBytes[2]; // eliminate msb
     tempExponent += tempValue.tempBytes[3] - 127;
-    //sprintf(s, " mant=%02x ", tempMantissa); Serial.print(s); //*/
+    //sprintf(s, " mant=%02x ", tempMantissa); Serial.print(s);
     /*sprintf(s, "aexp=%02x mant=%02x ", aExponent, aMantissa); Serial.print(s);
       sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
@@ -376,6 +383,7 @@ class Posit8 {
       if (esBits & 1) tempResult |= (1 << bitCount);
       bitCount--;
     }
+    // Write mantissa bits
     if (bitCount >= 0) { // still space for mantissa
       int8_t mantissacount = 1;
       while (bitCount-->= 0) {
@@ -474,8 +482,10 @@ class Posit16 {
   }
   // End of constructors
 
-  static positSplit(Posit16 & p, boolean & sign, boolean & bigNum, int8_t & exponent, uint16_t & mantissa) {
+  static positSplit(Posit16 & p, boolean & sign, /*boolean & bigNum,*/ int8_t & exponent, uint16_t & mantissa) {
+    boolean bigNum;
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
+
     sign = (p.value & 0x8000);
     exponent = -(1 << ES16); // negative exponents start at -1/-2/-4;
     // Note: "exponent" means power of 2, "exp" means exponent bits outside regime
@@ -509,7 +519,7 @@ class Posit16 {
   // Add methods for posit16 arithmetic
   static Posit16 posit16_add(Posit16 a, Posit16 b) {
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -520,8 +530,8 @@ class Posit16 {
     if (a.value == 0) return b;
     if (b.value == 0) return a;
 
-    positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    positSplit(a, aSign, aExponent, aMantissa);
+    positSplit(b, bSign, bExponent, bMantissa);
 
     // align smaller number
     if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
@@ -598,7 +608,7 @@ class Posit16 {
 
   static Posit16 posit16_mul(Posit16 a, Posit16 b) {
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -611,8 +621,8 @@ class Posit16 {
     if (b.value == 0x4000) return a;
 
     // Split posit into constituents
-    positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    positSplit(a, aSign, aExponent, aMantissa);
+    positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, add exponents, multiply mantissas
     if (aSign ^ bSign) tempResult = 0x8000;
@@ -671,7 +681,7 @@ class Posit16 {
 
   static Posit16 posit16_div(Posit16 a, Posit16 b) {
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -681,8 +691,8 @@ class Posit16 {
     if (b.value == 0x8000 || b.value == 0) return Posit16((uint16_t) 0x8000); // NaR if /0 or /NaR
     if (a.value == 0 || a.value == 0x8000 || b.value == 0x4000) return a; // a==0 or NaR, b==1.0
 
-    positSplit(a, aSign, aBigNum, aExponent, aMantissa);
-    positSplit(b, bSign, bBigNum, bExponent, bMantissa);
+    positSplit(a, aSign, aExponent, aMantissa);
+    positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, sub exponents, div mantissas
     if (aSign ^ bSign) tempResult = 0x8000;
@@ -732,7 +742,7 @@ class Posit16 {
       }
     }
     return Posit16(tempResult);
-  } // end of posit8_div function definition
+  }
 
   // Operator overloading for Posit16
   Posit16 operator + (const Posit16 & other) const {
@@ -758,8 +768,7 @@ float posit2float(Posit8 & p) {
     float tempFloat; // little endian in AVR8
     uint32_t tempInt; // little-endian as well
     uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
-  }
-  tempValue;
+  } tempValue;
   // Handle special cases first
   if (p.value == 0) return 0.0f;
   if (p.value == 0x80) return NAN;
