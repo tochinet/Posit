@@ -11,7 +11,7 @@ Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are
 
 No code was copied from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and rounding, leading to the conclusion that *rounding to nearest even* is not likely worth pursuing on Arduino), and from many other pages on the Internet (Quora, Stack Overflow, etc.).
 
-[WokWi](https://wokwi.com) was extensively used for the development of this library, as it responds much faster to code change than the Arduino software.
+[WokWi](https://wokwi.com/projects/407404859992419329) was extensively used for the development of this library, as it responds much faster to code change than the Arduino software.
 
 ### Status 
 This library is a work in progress, and my first experience in creating an Arduino library _and_ publishing on GitHub, so expect errors and mistakes, stupid or not, and don't hesitate to contribute and propose correction and ameliorations. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/). 
