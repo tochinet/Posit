@@ -8,7 +8,7 @@
 
   Major design goals are :
   - Small size, both in code/program memory and RAM usage
-  - Simplicity, restricting the library to 8 and 16 bits posits and +-/* operations
+  - Simplicity, restricting the library to 8 and 16 bits posits and + - * / operations
   - Useful, explanatory comments in the library
 
   As corollary, major non-goals are :
@@ -140,14 +140,14 @@ class Posit8 {
 
   // Helper method to split a posit into constituents
   // arguments by reference to avoid copy
-  static positSplit(Posit8 & p, boolean & sign, int8_t & exponent, uint8_t & mantissa) {
+  static void positSplit(Posit8 & p, boolean & sign, int8_t & exponent, uint8_t & mantissa) {
     boolean bigNum;
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
  
     sign = (p.value & 128);
     exponent = -(1 << ES8); // negative exponents start at -1/-2/-4;
     // Note: "exponent" means power of 2, "exp" means exponent bits outside regime
-    if (bigNum = (p.value & 64)) exponent = 0; // boolean assignment inside test;
+    if ((bigNum = (p.value & 64)!=0)) exponent = 0; // boolean assignment inside test;
     bitCount = 5; // starts at second regime bit
 
     //first extract exponent from regime bits
@@ -177,7 +177,7 @@ class Posit8 {
   // Methods for posit8 arithmetic
   static Posit8 posit8_add(Posit8 a, Posit8 b) { // better as externalized function ?
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa, esBits;
     int8_t bitCount; // posit bit counter
@@ -256,7 +256,7 @@ class Posit8 {
 
   static Posit8 posit8_mul(Posit8 a, Posit8 b) {
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent = -1, bExponent = -1;
     uint8_t aMantissa = 0, bMantissa = 0, esBits;
     int8_t bitCount; // posit bit counter
@@ -326,7 +326,7 @@ class Posit8 {
 
   static Posit8 posit8_div(Posit8 a, Posit8 b) {
     boolean aSign, bSign;
-    boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa, esBits;
     int8_t bitCount; // posit bit counter
@@ -395,16 +395,16 @@ class Posit8 {
   } // end of posit8_div function definition
 
   // Operator overloading for Posit8
-  Posit8 Posit8::operator + (const Posit8 & other) const {
+  Posit8 operator + (const Posit8 & other) const {
     return posit8_add( * this, other);
   }
-  Posit8 Posit8::operator - (const Posit8 & other) const {
+  Posit8 operator - (const Posit8 & other) const {
     return posit8_sub( * this, other);
   }
-  Posit8 Posit8::operator * (const Posit8 & other) const {
+  Posit8 operator * (const Posit8 & other) const {
     return posit8_mul( * this, other);
   }
-  Posit8 Posit8::operator / (const Posit8 & other) const {
+  Posit8 operator / (const Posit8 & other) const {
     return posit8_div( * this, other);
   } //*/
 }; // end of Posit8 Class definition
@@ -482,14 +482,14 @@ class Posit16 {
   }
   // End of constructors
 
-  static positSplit(Posit16 & p, boolean & sign, /*boolean & bigNum,*/ int8_t & exponent, uint16_t & mantissa) {
+  static void positSplit(Posit16 & p, boolean & sign, /*boolean & bigNum,*/ int8_t & exponent, uint16_t & mantissa) {
     boolean bigNum;
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
 
     sign = (p.value & 0x8000);
     exponent = -(1 << ES16); // negative exponents start at -1/-2/-4;
     // Note: "exponent" means power of 2, "exp" means exponent bits outside regime
-    if (bigNum = (p.value & 64 * 256)) exponent = 0; // boolean assignment inside test;
+    if ((bigNum = (p.value & 64 * 256))!=0) exponent = 0; // boolean assignment inside test;
     bitCount = 5 + 8;
 
     //first extract exponent from regime bits
@@ -748,13 +748,13 @@ class Posit16 {
   Posit16 operator + (const Posit16 & other) const {
     return posit16_add( * this, other);
   }
-  Posit16 Posit16::operator - (const Posit16 & other) const {
+  Posit16 operator - (const Posit16 & other) const {
     return posit16_sub( * this, other);
   }
-  Posit16 Posit16::operator * (const Posit16 & other) const {
+  Posit16 operator * (const Posit16 & other) const {
     return posit16_mul( * this, other);
   }
-  Posit16 Posit16::operator / (const Posit16 & other) const {
+  Posit16 operator / (const Posit16 & other) const {
     return posit16_div( * this, other);
   }
 };
