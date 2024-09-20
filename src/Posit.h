@@ -126,7 +126,7 @@ class Posit8 {
           this->value |= (1 << bitCount);
         bitCount--;
       }
-    }
+    } //*/
   } 
 
   Posit8(double v = 0.0) { // Construct from double by casting to float
