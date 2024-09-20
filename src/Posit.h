@@ -52,7 +52,7 @@
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-struct splitPosit { // Not in use yet
+struct splitPosit { // Not used, needed ?
   boolean sign;
   int8_t exponent; // 2's power, both from/to regime and exp fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits?
@@ -62,12 +62,10 @@ class Posit8 {
   private:
   //uint8_t value; // maybe in future
 
-  public: uint8_t value; // first used int8_t, but issues with nar to nan conversion
-
-  Posit8(uint8_t raw = 0) { // Construct from raw unsigned byte
-    this->value = raw;
-  }
+  public: Posit8(uint8_t v = 0): value(v) {} 
   
+  uint8_t value; // first used int8_t, but issues with nar to nan conversion
+
   #ifdef byte // Exists in Arduino, but not in all C/C++ toolchains
       Posit8(byte raw = 0) { // Construct from raw byte type (unsigned char)
         this->value = (uint8_t)raw;
@@ -92,6 +90,7 @@ class Posit8 {
       this->value = 0x80; // NaR
       return;
     }
+    // Start of uint16_t fillPosit(float& v, uint8_t& ES); ?
     tempValue.tempFloat = v;
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     int8_t tempExponent = tempValue.tempBytes[3] - 127; // remove IEEE754 bias
@@ -99,6 +98,7 @@ class Posit8 {
     tempExponent >>= ES8;
 
     // Fill value with result
+    //this->value |= fillPosit(tempExponent,esBits,tempMantissa)
     int8_t bitCount = 6; // first regime bit
     if (tempExponent >= 0) { // abs(v) >= 1, regime bits are 1
       while (tempExponent-->= 0 && bitCount >= 0) {
