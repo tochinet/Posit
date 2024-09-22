@@ -44,7 +44,7 @@
 #define EPSILON 0.000001 // results smaller than EPSILON are rounded to zero. 
 #endif
 #ifndef ES8   // Define ES8 as 2 in sketch for standard compliance
-#define ES8 0 // No exponent bits in Posit8. 
+#define ES8 0 // No exponent bits in Posit8, meaning maxint=64. 
 #endif
 #define ES16 2 // Two exponent bits in Posit16, compliant to standard
 
@@ -52,17 +52,17 @@
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-struct splitPosit { // Not used, needed ?
+/* struct splitPosit { // Not used, needed ?
   boolean sign;
   int8_t exponent; // 2's power, both from/to regime and exp fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits?
-};
+}; //*/
 
 class Posit8 {
   private:
   //uint8_t value; // maybe in future
 
-  public: Posit8(uint8_t v = 0): value(v) {} 
+  public: Posit8(uint8_t v = 0): value(v) {} // Default constructor
   
   uint8_t value; // first used int8_t, but issues with nar to nan conversion
 
@@ -70,35 +70,38 @@ class Posit8 {
       Posit8(byte raw = 0) { // Construct from raw byte type (unsigned char)
         this->value = (uint8_t)raw;
       }
-  #endif //*/
+  #endif
   
   Posit8(float v = 0) { // Construct from float32, IEEE754 format
-    union float_int { // for bit manipulation
-      float tempFloat; // little endian in AVR8
-      uint32_t tempInt; // little-endian as well
-      uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
-    } tempValue;
+
 
     this->value = 0;
     if (v < 0) { // negative numbers
       if (v >= -EPSILON) return; // very small neg numbers ~=0, non-standard
       this->value += 0x80; // set sign and continue
     } else { // v>=0
-      if (v <= EPSILON) return; // include EPSILON required if EPSILON were zero
+      if (v <= EPSILON) return; // including EPSILON is required as EPSILON can be zero
     }
     if (isnan(v)) {
       this->value = 0x80; // NaR
       return;
     }
-    // Start of uint16_t fillPosit(float& v, uint8_t& ES); ?
+
+    //this->value |= fillPosit(v, ES8);
+    // Start of uint16_t fillPosit(float& v, uint8_t ES); ?
+    union float_int { // for bit manipulation
+      float tempFloat; // little-endian in AVR8
+      uint32_t tempInt; // little-endian as well
+      uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
+    } tempValue;
+    
     tempValue.tempFloat = v;
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     int8_t tempExponent = tempValue.tempBytes[3] - 127; // remove IEEE754 bias
     uint8_t esBits = tempExponent & ((1 << ES8) - 1);
     tempExponent >>= ES8;
 
-    // Fill value with result
-    //this->value |= fillPosit(tempExponent,esBits,tempMantissa)
+    // Fill value with result, start with regime
     int8_t bitCount = 6; // first regime bit
     if (tempExponent >= 0) { // abs(v) >= 1, regime bits are 1
       while (tempExponent-->= 0 && bitCount >= 0) {
@@ -110,6 +113,7 @@ class Posit8 {
       this->value |= (1 << bitCount--); // set terminating bit as 1
     }
 
+    // Only support for ES = 0, 1 or 2
     if (bitCount >= 0 && ES8 == 2) { // still space for exp and/or mantissa, handle exp first
       if (esBits & 2) this->value |= (1 << bitCount);
       bitCount--;
@@ -126,7 +130,7 @@ class Posit8 {
           this->value |= (1 << bitCount);
         bitCount--;
       }
-    } //*/
+    }
   } 
 
   Posit8(double v = 0.0) { // Construct from double by casting to float
@@ -135,6 +139,19 @@ class Posit8 {
 
   Posit8(int v = 0) { // Construct from int by casting to float for simplicity
     this->value = Posit8((float) v).value;
+    /* Idea to construct from int : first get log2(N), then extract mantissa
+    // algorithm from https://graphics.stanford.edu/~seander/bithacks.html
+    uint8_t exponent=0; // result of log2(v) will go here
+    uint8_t shift; // each bit of the log2
+    int vCopy=v; // Copy of the argument needed to fill mantissa!
+
+    // exponent = (v > 0xFFFF) << 4; v >>= r; // only for 64bits values
+    shift = (v > 0xFF  ) << 3; v >>= shift; exponent |= shift;
+    shift = (v > 0xF   ) << 2; v >>= shift; exponent |= shift;
+    shift = (v > 0x3   ) << 1; v >>= shift; exponent |= shift;
+    exponent |= (v >> 1);
+    // then extract mantissa. 
+    */
   }
   // End of constructors
 
