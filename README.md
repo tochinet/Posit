@@ -24,19 +24,19 @@ Maybe a better way to round operations will sneak in if it doesn't break the sim
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
-The standard Arduino library supports one type of floating point numbers, 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). A float consist of one bit sign (like signed integers), 8 bits exponent (power of two, biased by adding 127), and 23 bits of mantissa (the bits after the "1", that is not coded). There is no inversion of bits (2's complement) like for signed integers.
+The standard Arduino library supports [several functions](https://www.tutorialspoint.com/arduino/arduino_math_library.htm) but only one type of floating point numbers, 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). A float consist of one bit sign (like signed integers), 8 bits exponent (power of two, biased by adding 127), and 23 bits of mantissa (the bits after the "1", that is not coded). There is no inversion of bits (2's complement) like for signed integers.
 
 Expressing -10.5 in float requires the following steps :
 1. coding the absolute value in binary (1010.1)
 2. finding the power of 2 (3) and add 127 (total 130)
 3. coding the sign, the exponent and the mantissa
 
-Hence the 32-bit float representation of -10.5is 0b1***100 0001 0***010 1000 0000 0000 0000 0000 (with exponent bits bold and italicized). 
+Hence the 32-bit float representation of -10.5 is 0b1***100 0001 0***010 1000 0000 0000 0000 0000 (with exponent bits bold and italicized). 
 
-Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. IEEE 754 also defines some exceptions such as +/- infinity (exponent 255, mantissa all zeros), two different zeros (+0 is all zeros and -0 is 1 followed by all zeros), subnormal numbers (very small), and different representations of Not a Number (NAN).
+Funny enough many simple reals cannot be expressed exactly. For example 0.1 is rounded tp 0b0 0***011 1101 1***100 1100 1100 1100 1100 1101 (positive, power -4, mantissa 1.6000000238418579), or 0,1000000014901161. IEEE 754 also allocates several values for exceptions such as +/- infinity (exponent 255, mantissa all zeros), two different zeros (+0 is all zeros and -0 is 1 followed by all zeros), subnormal numbers (very small), and different representations of Not a Number (NAN).
 
 ### Posit float representation
-The major invention in the posit format was to add one additional variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and the first different bit marks the end of the regime field. The (fixed) number of exponent bits ("E" field in the picture, also called "es" bits) was an externally defined parameter. This means there were multiple, incompatible versions of posits, depending on the es parameter. To remove that caveat, the posit standard imposes es=2 for all sizes. However, the library supports both Posit8,0 (no exponent field) and Posit8,2.
+The major invention in the posit format was to add one additional variable-length field (called "regime") between the sign and the exponent. All regime bits are equal, and the first different bit marks the end of the regime field. The (fixed) size of the exponent bits field ("E" in the picture, also called "es" bits) used to be an externally defined parameter. This means there were multiple, incompatible versions of posits, depending on the es parameter. To remove that caveat, the posit standard imposes es=2 for all sizes. However, the library supports both Posit8,0 (no exponent field) and Posit8,2.
 
 <p align="center"><img src="posit_standard_format.png"><br>
 Fig.1 : General Posit Format (from Posit Standard(2022))
