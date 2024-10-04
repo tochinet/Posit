@@ -2,17 +2,17 @@
  *
  * Contains several test scenarios that can easily be commented out or uncommented
  * - Creation of several posits from raw values and printing of float conversions
- * - Creation of two posits from Serial input and test of four operations (+overloading)
- * - Creation of tables (poorly aligned) of 16 randomly chosen pairs of values and printing of
- *   the values, BINary content, and 4 operations
+ * - Creation of two posits from Serial input and test of four basic operations (+overloading)
+ * - Creation of (poorly aligned) tables of 16 randomly chosen pairs of values from a redefined list
+ *    and printing of the values, BINary content, and results of 4 basic operations
  *
- * The test scenarios are available for both Posit8 and Posit16,2
+ * The test scenarios are available below for both Posit8 and Posit16,2
  */
 #define ES8 2 // number of bits in exponent field (default is zero in library)
 //#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
 
-char cs[80]; // C string for table
+char cs[80]; // C string to hold one line of the table
 double numbersList[16]= {0,NAN,1.0,-2.0,3.14159,7.0,-11.0,15.0,50.0,-333.0,0.5,0.09,-0.05,0.005,0.0001};
 // array of floats to choose randomly from for the table test scenarios
 
@@ -28,8 +28,8 @@ void setup() {
   } 
   Serial.println(); //*/
  
- /*/Serial.println("Creation of many posit16 values from raw integer");  
-  for (long raw = 0; raw<65535 ; raw += sqrt(random(50000))) {
+ /**/Serial.println("Creation of many posit16 values from raw integer");  
+  for (long raw = 0; raw<65535 ; raw += (1+random(50)*random(10)*random(10))) { // between 1 and 5k, but more small numbers
     Posit16 rawPosit ((uint16_t)raw);
     Serial.print("Raw16 : "); Serial.print(rawPosit.value, BIN);
     Serial.print(" "); Serial.println(posit2float(rawPosit),12);
