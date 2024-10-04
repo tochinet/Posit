@@ -11,7 +11,7 @@ Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are
 
 No code was copied from any existing work, but some inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and rounding, leading to the conclusion that *rounding to nearest even* is not likely worth pursuing on Arduino), and from many other pages on the Internet (Quora, Stack Overflow, etc.).
 
-[WokWi](https://wokwi.com/projects/407404859992419329) was extensively used for the development of this library, as it responds much faster to code change than the Arduino software.
+The [WokWi](https://wokwi.com/projects/407404859992419329) simulator was extensively used for the development of this library, as it reacts much faster to code changes than the Arduino software.
 
 ### Status 
 This library is a work in progress, and my first experience in creating an Arduino library _and_ publishing on GitHub, so expect errors and mistakes, stupid or not, and don't hesitate to contribute and propose correction and ameliorations. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/). 
@@ -24,7 +24,7 @@ Maybe a better way to round operations will sneak in if it doesn't break the sim
 
 ## Some explanations on Floats and Posits.
 ### IEEE 754 float representation
-The standard Arduino library supports one type of floating point numbers, 32-bit IEEE 754. This is the most common standard for floating point calculations. A float consist of one bit sign (like signed integers), 8 bits exponent (power of two, biased by adding 127), and 23 bits of mantissa (the bits after the "1", that is not coded). There is no inversion of bits (2's complement) like for signed integers.
+The standard Arduino library supports one type of floating point numbers, 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). A float consist of one bit sign (like signed integers), 8 bits exponent (power of two, biased by adding 127), and 23 bits of mantissa (the bits after the "1", that is not coded). There is no inversion of bits (2's complement) like for signed integers.
 
 Expressing -10.5 in float requires the following steps :
 1. coding the absolute value in binary (1010.1)
