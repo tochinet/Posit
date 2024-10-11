@@ -141,7 +141,7 @@ class Posit8 {
     unsigned int v;	         // 32-bit value to find the log2 of 
     uint8_t exponent=0; // result of log2(v) will go here
     uint8_t shift; // each bit of the log2
-    uint16_t mantiissa=v; // Copy of the argument needed to fill mantissa!
+    uint16_t mantissa=v; // Copy of the argument needed to fill mantissa!
 
     // exponent = (v > 0xFFFF) << 4; v >>= exponent; // only for long values
     shift = (v > 0xFF  ) << 3; v >>= shift; exponent |= shift;
@@ -151,6 +151,10 @@ class Posit8 {
     // then extract mantissa (all other bits shifted right). 
     mantissa <<= 16-exponent;
     */
+  }
+
+  Posit8(Posit16 v = 0) {
+    this->value = v.value >>8 ;
   }
   // End of constructors
 
@@ -493,6 +497,10 @@ class Posit16 {
 
   Posit16(int v = 0) { // Construct from int by casting to float for simplicity
     this -> value = Posit16((float)v).value;
+  }
+
+  Posit16(Posit8 v = 0) {
+    this->value = v.value <<8 ;
   }
   // End of constructors
 
