@@ -1,9 +1,9 @@
 /* Sketch to test posit library
  *
  * Contains several test scenarios that can easily be commented out or uncommented
- * - Creation of several posits from raw values and printing of float conversions
- * - Creation of two posits from Serial input and test of four basic operations (+overloading)
- * - Creation of (poorly aligned) tables of 16 randomly chosen pairs of values from a redefined list
+ * - Creation and printing of all (256) Posit8 and/or a few hundreds Posit16 values 
+ * - Input of two posits from Serial and test of four basic operations (with overloading)
+ * - Creation of (poorly aligned) tables of 16 randomly chosen pairs of values from a predefined list
  *    and printing of the values, BINary content, and results of 4 basic operations
  *
  * The test scenarios are available below for both Posit8 and Posit16,2
@@ -12,13 +12,16 @@
 //#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
 
-char cs[80]; // C string to hold one line of the table
 double numbersList[16]= {0,NAN,1.0,-2.0,3.14159,7.0,-11.0,15.0,50.0,-333.0,0.5,0.09,-0.05,0.005,0.0001};
 // array of floats to choose randomly from for the table test scenarios
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Test of Posit library\n");
+  Serial.println("Input for seeding random ? ");
+  while (Serial.available() == 0);
+  randomSeed (Serial.parseFloat() + millis());
+  while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
 
   /*/Serial.println("Creation of all posit8 values from raw integer");  
   for (int raw = 0; raw<256 ; raw ++) {
@@ -29,9 +32,11 @@ void setup() {
   Serial.println(); //*/
  
  /**/Serial.println("Creation of many posit16 values from raw integer");  
-  for (long raw = 0; raw<65535 ; raw += (1+random(50)*random(10)*random(10))) { // between 1 and 5k, but more small numbers
+  uint16_t count=0;
+  for (unsigned long raw = 0; raw<65536L ; raw += (1+random(20)*random(10)*random(10))) { // between 1 and 2k, but more small numbers
     Posit16 rawPosit ((uint16_t)raw);
-    Serial.print("Raw16 : "); Serial.print(rawPosit.value, BIN);
+    Serial.print("Raw16 ("); Serial.print(count++);
+    Serial.print(") "); Serial.print(rawPosit.value, BIN);
     Serial.print(" "); Serial.println(posit2float(rawPosit),12);
   } 
   Serial.println(); //*/
@@ -141,8 +146,8 @@ void setup() {
 
   /**/Serial.println("Table of 16 random Posit 8 results"); 
   randomSeed(millis());
-  Serial.println("    A    :    B    :     abin    :     bbin    :    sum    :    sub    :    mul    :    div");
-  Serial.println("---------+---------+-------------+-------------+-----------+-----------+-----------+-----------");
+  Serial.println("    A   :    B   :   abin   :   bbin   :   sum    :   sub   :   mul   :   div");
+  Serial.println("--------+--------+----------+----------+----------+---------+---------+---------");
   for (int j=0; j<16; j++) {
       Posit8 firstPosit=Posit8(numbersList[random(16)]); 
       Posit8 secondPosit=Posit8(numbersList[random(16)]); 
