@@ -412,6 +412,18 @@ class Posit8 {
     return Posit8(tempResult);
   } // end of posit8_div function definition
 
+  Posit8 sqrt(Posit8 a) {
+    if (a.value > 0x7F) return Posit8(0x80); // NaR for negative and NaR
+    
+    Posit8 approx = x;   // Initial approximation
+    Posit8 half = Posit8(0.5);
+    
+    // 2 Newton-raphson iterations for 8 bits
+    approx = (approx + x / approx) * half;
+    approx = (approx + x / approx) * half;
+    return approx;
+  }
+
   // Operator overloading for Posit8
   Posit8 operator + (const Posit8 & other) const {
     return posit8_add( * this, other);
@@ -424,7 +436,7 @@ class Posit8 {
   }
   Posit8 operator / (const Posit8 & other) const {
     return posit8_div( * this, other);
-  } //*/
+  }
 }; // end of Posit8 Class definition
 
 class Posit16 {
@@ -765,6 +777,20 @@ class Posit16 {
     }
     return Posit16(tempResult);
   } // end of posit8_div function definition
+
+  Posit16 sqrt(Posit16 a) {
+    if (a.value > 0x7FFF) return Posit16(0x8000); // NaR for negative and NaR
+    
+    Posit16 approx = x;   // Initial approximation
+    Posit16 half = Posit16(0.5);
+    
+    // 4 Newton-raphson iterations for 16 bits
+    approx = (approx + x / approx) * half;
+    approx = (approx + x / approx) * half;
+    approx = (approx + x / approx) * half;
+    approx = (approx + x / approx) * half;
+    return approx;
+  }
 
   // Operator overloading for Posit16
   Posit16 operator + (const Posit16 & other) const {
