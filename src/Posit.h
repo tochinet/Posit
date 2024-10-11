@@ -8,12 +8,12 @@
 
   Major design goals are :
   - Small size, both in code/program memory and RAM usage
-  - Simplicity, restricting the library to 8 and 16 bits posits and + - * / operations
+  - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
   - Useful, explanatory comments in the library
 
   As corollary, major non-goals are :
   - Support for 32bits posits (not enough added value compared with usual floats)
-  - Compliance with the Posit standard (2022)
+  - Full compliance with the Posit standard (2022)
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
   - Support of quire (very long accumulator)
 
@@ -52,28 +52,25 @@
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-/* struct splitPosit { // Not used, needed ?
+struct splitPosit { // Not used yet
   boolean sign;
   int8_t exponent; // 2's power, both from/to regime and exp fields
-  uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits?
-}; //*/
+  uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
+};
 
 class Posit8 {
   private:
   //uint8_t value; // maybe in future
 
-  public: Posit8(uint8_t v = 0): value(v) {} // Default constructor
-  
+  public:   
   uint8_t value; // first used int8_t, but issues with nar to nan conversion
+  Posit8(uint8_t raw = 0): value(raw) {} // Default constructor from raw value
 
-  #ifdef byte // Exists in Arduino, but not in all C/C++ toolchains
-      Posit8(byte raw = 0) { // Construct from raw byte type (unsigned char)
-        this->value = (uint8_t)raw;
-      }
+  #ifdef byte // idem from "byte", exists in Arduino, but not in all C/C++ toolchains
+      Posit8(byte raw = 0): value(raw) {}
   #endif
   
   Posit8(float v = 0) { // Construct from float32, IEEE754 format
-
 
     this->value = 0;
     if (v < 0) { // negative numbers
@@ -139,18 +136,20 @@ class Posit8 {
 
   Posit8(int v = 0) { // Construct from int by casting to float for simplicity
     this->value = Posit8((float) v).value;
-    /* Idea to construct from int : first get log2(N), then extract mantissa
-    // algorithm from https://graphics.stanford.edu/~seander/bithacks.html
+    /* TODO : construct from int algorithm : first get log2(N), then extract mantissa
+    // algorithm copied from https://graphics.stanford.edu/~seander/bithacks.html
+    unsigned int v;	         // 32-bit value to find the log2 of 
     uint8_t exponent=0; // result of log2(v) will go here
     uint8_t shift; // each bit of the log2
-    int vCopy=v; // Copy of the argument needed to fill mantissa!
+    uint16_t mantiissa=v; // Copy of the argument needed to fill mantissa!
 
-    // exponent = (v > 0xFFFF) << 4; v >>= r; // only for 64bits values
+    // exponent = (v > 0xFFFF) << 4; v >>= exponent; // only for long values
     shift = (v > 0xFF  ) << 3; v >>= shift; exponent |= shift;
     shift = (v > 0xF   ) << 2; v >>= shift; exponent |= shift;
     shift = (v > 0x3   ) << 1; v >>= shift; exponent |= shift;
     exponent |= (v >> 1);
-    // then extract mantissa. 
+    // then extract mantissa (all other bits shifted right). 
+    mantissa <<= 16-exponent;
     */
   }
   // End of constructors
@@ -158,7 +157,7 @@ class Posit8 {
   // Helper method to split a posit into constituents
   // arguments by reference to avoid copy
   static void positSplit(Posit8 & p, boolean & sign, int8_t & exponent, uint8_t & mantissa) {
-    boolean bigNum;
+    boolean bigNum; // true for abs(p)>=1
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
  
     sign = (p.value & 128);
@@ -273,7 +272,6 @@ class Posit8 {
 
   static Posit8 posit8_mul(Posit8 a, Posit8 b) {
     boolean aSign, bSign;
-    //boolean aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
     int8_t aExponent = -1, bExponent = -1;
     uint8_t aMantissa = 0, bMantissa = 0, esBits;
     int8_t bitCount; // posit bit counter
@@ -358,7 +356,7 @@ class Posit8 {
     // xor signs, sub exponents, div mantissas
     if (aSign ^ bSign) tempResult = 0x80;
     int tempExponent = (aExponent - bExponent);
-    // first solution to divide mantissas : use float (not efficient?)
+    // esay solution to divide mantissas : use float division (not efficient)
     union float_int { // for bit manipulation
       float tempFloat; // little endian in AVR8
       uint32_t tempInt; // little-endian as well
@@ -370,7 +368,6 @@ class Posit8 {
     tempValue.tempInt <<= 1; // eliminate sign, align exponent and mantissa
     uint8_t tempMantissa = tempValue.tempBytes[2]; // eliminate msb
     tempExponent += tempValue.tempBytes[3] - 127;
-    //sprintf(s, " mant=%02x ", tempMantissa); Serial.print(s);
     /*sprintf(s, "aexp=%02x mant=%02x ", aExponent, aMantissa); Serial.print(s);
       sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
