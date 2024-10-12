@@ -1,0 +1,17 @@
+{
+  "name": "Posit",
+  "version": "0.1.0",
+  "repo": "tochinet/Posit",
+  "description": "Implementation of basic operations for Posit arithmetic, an alternative to IEEE754 floating point numbers",
+  "keywords": [
+    "Posit",
+    "floating",
+    "IEEE",
+  ],
+  "dependencies": {
+    }
+  "license": "MIT",
+  "src": [
+    "src/poist.h"
+  ],
+}
