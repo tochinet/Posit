@@ -11,7 +11,7 @@
   - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
   - Useful, explanatory comments in the library
 
-  As corollary, major non-goals are :
+  As corollary, major non-goals (as long as I don't need them) are :
   - Support for 32bits posits (not enough added value compared with usual floats)
   - Full compliance with the Posit standard (2022)
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
@@ -53,7 +53,7 @@ char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
 struct splitPosit { // Not used yet
-  // boolean sign; // not really needed, will be treated in function
+  boolean sign;
   int8_t exponent; // 2's power, both from/to regime and exp fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 };
@@ -151,12 +151,7 @@ class Posit8 {
     // then extract mantissa (all other bits shifted right). 
     mantissa <<= 16-exponent;
     */
-  }
-
-  Posit8(Posit16 v = 0) {
-    this->value = v.value >>8 ;
-  }
-  // End of constructors
+  } // End of constructors
 
   // Helper method to split a posit into constituents
   // arguments by reference to avoid copy
@@ -411,18 +406,6 @@ class Posit8 {
     }
     return Posit8(tempResult);
   } // end of posit8_div function definition
-
-  Posit8 sqrt(Posit8 a) {
-    if (a.value > 0x7F) return Posit8(0x80); // NaR for negative and NaR
-    
-    Posit8 approx = x;   // Initial approximation
-    Posit8 half = Posit8(0.5);
-    
-    // 2 Newton-raphson iterations for 8 bits
-    approx = (approx + x / approx) * half;
-    approx = (approx + x / approx) * half;
-    return approx;
-  }
 
   // Operator overloading for Posit8
   Posit8 operator + (const Posit8 & other) const {
@@ -778,36 +761,24 @@ class Posit16 {
     return Posit16(tempResult);
   } // end of posit8_div function definition
 
-  Posit16 sqrt(Posit16 a) {
-    if (a.value > 0x7FFF) return Posit16(0x8000); // NaR for negative and NaR
-    
-    Posit16 approx = x;   // Initial approximation
-    Posit16 half = Posit16(0.5);
-    
-    // 4 Newton-raphson iterations for 16 bits
-    approx = (approx + x / approx) * half;
-    approx = (approx + x / approx) * half;
-    approx = (approx + x / approx) * half;
-    approx = (approx + x / approx) * half;
-    return approx;
-  }
+  //static Posit16 posit16_sqrt(Posit16 a) ;
 
   // Operator overloading for Posit16
   Posit16 operator + (const Posit16 & other) const {
-    return posit16_add( * this, other);
+    return posit16_add(*this, other);
   }
   Posit16 operator - (const Posit16 & other) const {
-    return posit16_sub( * this, other);
+    return posit16_sub(*this, other);
   }
   Posit16 operator * (const Posit16 & other) const {
-    return posit16_mul( * this, other);
+    return posit16_mul(*this, other);
   }
   Posit16 operator / (const Posit16 & other) const {
-    return posit16_div( * this, other);
+    return posit16_div(*this, other);
   }
-};
+}; // end of Posit16 class definition
 
-float posit2float(Posit8 & p) {
+static float posit2float(Posit8 & p) {
   boolean sign = false;
   boolean bigNum = false; // 0/false between -1 and +1, 1/true otherwise
   int8_t exponent = 0; // correct if abs >= 1.0
@@ -845,7 +816,38 @@ float posit2float(Posit8 & p) {
   return tempValue.tempFloat;
 } // end of posit2float 8-bit
 
-float posit2float(Posit16 p) {
+Posit8 posit8_sqrt(Posit8& a) {
+    if (a.value > 0x7F) return Posit8(0x80); // NaR for negative and NaR
+    if (a.value ==0) return Posit8(0); // Newton-Raphson would /0
+    
+    Posit8 approx = a; // Initial approximation, OK for small regimes
+    if ((a.value > 0x60) || (a.value < 0x1F)) { // Regime >= 2 bits
+      approx.value = (a.value<<1) & 0x7F; // Better initial approximation
+      Serial.print("Approx: ");Serial.println(posit2float(approx));
+      Serial.print("Approx: ");Serial.println(approx.value,HEX);
+    }
+    Posit8 half = Posit8(0.5); // use float, varies with ES8
+    
+    // 2 Newton-raphson iterations for 8 bits
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    return approx;
+  }
+
+Posit8 posit8_next(Posit8& a) {
+  uint8_t tempValue= a.value;
+  tempValue++;
+  Posit8 nextValue = tempValue;
+  return nextValue;
+}
+
+Posit8 posit8_prior(Posit8 a) {
+  Posit8 priorValue = (uint8_t)(a.value-1);
+  return priorValue;
+}
+
+float posit2float(Posit16& p) {
   boolean sign = false;
   boolean bigNum = false; // 0/false between -1 and +1, 1/true otherwise
   int8_t exponent = 0; // correct if abs >= 1.0
@@ -882,3 +884,29 @@ float posit2float(Posit16 p) {
   if (sign) return -tempValue.tempFloat;
   return tempValue.tempFloat;
 } // end of posit2float 16-bit
+
+Posit16 posit16_sqrt(Posit16 a) {
+    if (a.value > 0x7FFF) return Posit16(0x8000); // NaR for negative and NaR
+    if (a.value == 0) return Posit16(0); // Newton-Raphson would /0
+    
+    Posit16 approx = a; // Initial approximation, OK for small regimes
+    if ((a.value > 0x6000) || (a.value < 0x1FFF)) { // Regime >= 2 bits
+      approx.value = (a.value<<1) & 0x7FFF; // Better initial approximation
+      Serial.print("Approx: ");Serial.println(posit2float(approx));
+      Serial.print("Approx: ");Serial.println(approx.value,HEX);
+    }
+    Posit16 half = Posit16(0x3800); // 0.5 as ES16==2
+    
+    // 5 Newton-raphson iterations for 16 bits
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    approx = (approx + a / approx) * half;
+    return approx;
+  }
+
+/*Posit8 Posit8(Posit16 a) {
+  return (Posit8(a.value>>8));
+} // Forward define class ? */
