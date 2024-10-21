@@ -53,7 +53,7 @@ char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
 struct splitPosit { // Not used yet
-  boolean sign;
+  // boolean sign; // not really needed, will be treated in function
   int8_t exponent; // 2's power, both from/to regime and exp fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 };
