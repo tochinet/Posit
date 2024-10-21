@@ -31,7 +31,7 @@ void setup() {
   } 
   Serial.println(); //*/
  
- /**/Serial.println("Creation of many posit16 values from raw integer");  
+ /*/Serial.println("Creation of many posit16 values from raw integer");  
   uint16_t count=0;
   for (unsigned long raw = 0; raw<65536L ; raw += (1+random(20)*random(10)*random(10))) { // between 1 and 2k, but more small numbers
     Posit16 rawPosit ((uint16_t)raw);
@@ -42,30 +42,31 @@ void setup() {
   Serial.println(); //*/
 
   /*/Serial.println("Creation of two posit8 values from input strings"); 
-  Serial.println("First Posit8 ? ");
+  Serial.print("First Posit8 ? ");
   while (Serial.available() == 0) {
    }
   float floatValue = Serial.parseFloat();
   Serial.println(floatValue); 
   Posit8 firstPosit (floatValue);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println("Second Posit8 ? ");
+  //Serial.print("Second Posit8 ? ");
   while (Serial.available() == 0) { 
   }
   Posit8 secondPosit (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
+  Serial.println(posit2float(secondPosit)); //*/
   
-  Serial.print("First(");
+  /*/Serial.print("First(");
   Serial.print(firstPosit.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(firstPosit),4);
   Serial.print("Second(");
   Serial.print(secondPosit.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(secondPosit),4); 
+  Serial.println(posit2float(secondPosit),4); //*/
 
   Serial.println("Test of operations");  
-  //Posit8 sum = Posit8::posit8_add(firstPosit, secondPosit);
+  /*/Posit8 sum = Posit8::posit8_add(firstPosit, secondPosit);
   Posit8 sum = firstPosit + secondPosit;
   Serial.print("Sum(");
   Serial.print(sum.value, BIN);
@@ -92,6 +93,12 @@ void setup() {
   Serial.print(div.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(div),5); //*/
+
+  /*/Posit8 op8 = posit8_sqrt(firstPosit);
+  Serial.print("Sqrt(");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4); //*/
 
   /*/Serial.println("Creation of two posit16 values from input strings"); 
   Serial.println("First Posit16 ? ");
@@ -144,7 +151,7 @@ void setup() {
   Serial.println(posit2float(div16),10); //*/
   
 
-  /**/Serial.println("Table of 16 random Posit 8 results"); 
+  /*/Serial.println("Table of 16 random Posit 8 results"); 
   randomSeed(millis());
   Serial.println("    A   :    B   :   abin   :   bbin   :   sum    :   sub   :   mul   :   div");
   Serial.println("--------+--------+----------+----------+----------+---------+---------+---------");
@@ -173,7 +180,7 @@ void setup() {
       Serial.println(posit2float(div),4);
     } //*/
 
-  /**/Serial.println("Table of 16 random Posit16 results"); 
+  /*/Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
@@ -208,53 +215,98 @@ void setup() {
 }
 
 void loop() { // Nothing here if not uncommented
-  //Serial.println("Creation of two posit16 values from input strings"); 
-  /**/Serial.println("First Posit16 ? ");
+  /**/Serial.print("First Posit8 ? ");
   while (Serial.available() == 0) {
    }
+  float floatValue = Serial.parseFloat();
+  Serial.println(floatValue); 
+  Posit8 firstPosit (floatValue);
+  while (Serial.available() > 0) Serial.read();
+
+  Posit8 op8 = posit8_sqrt(firstPosit);
+  Serial.print("Sqrt(");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4); 
+
+  op8 = posit8_next(firstPosit);
+  Serial.print("Next(");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4); 
+
+  op8 = posit8_prior(firstPosit);
+  Serial.print("Prior(");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4); 
+
+  /*/Serial.print("First Posit16 ? ");
+  while (Serial.available() == 0) ;
   Posit16 firstP16 (Serial.parseFloat());
+  Serial.print("(");
+  Serial.print(firstP16.value, HEX);
+  Serial.print(") ");
+  Serial.println(posit2float(firstP16),10);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println("Second Posit16 ? ");
-  while (Serial.available() == 0) { 
-  }
+  Serial.print("Second Posit16 ? ");
+  while (Serial.available() == 0) ;
   Posit16 secondP16 (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-
-  Serial.print("First(");
-  Serial.print(firstP16.value, BIN);
-  Serial.print(") ");
-  Serial.println(posit2float(firstP16),15);
-  Serial.print("Second(");
-  Serial.print(secondP16.value, BIN);
+  Serial.print("(");
+  Serial.print(secondP16.value, HEX);
   Serial.print(") ");
   Serial.println(posit2float(secondP16),15); 
-
+  
   Serial.println("Test of operations");  
-  //Posit16 sum16 = Posit16::posit16_add(firstP16, secondP16);
-  Posit16 sum16 = firstP16 + secondP16;
+  Posit16 op16 = firstP16 + secondP16;
   Serial.print("Sum(");
-  Serial.print(sum16.value, BIN);
+  Serial.print(op16.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(sum16),15);
+  Serial.println(posit2float(op16),15);
 
-  //Posit16 sub16 = Posit16::posit16_sub(firstP16, secondP16);
-  Posit16 sub16 = firstP16 - secondP16;
+  op16 = firstP16 - secondP16;
   Serial.print("Sub(");
-  Serial.print(sub16.value, BIN);
+  Serial.print(op16.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(sub16),15);
+  Serial.println(posit2float(op16),15);
 
-  //Posit16 mul16 = Posit16::posit16_mul(firstP16, secondP16);
-  Posit16 mul16 = firstP16 + secondP16;
+  op16 = firstP16 * secondP16;
   Serial.print("Mul(");
-  Serial.print(mul16.value, BIN);
+  Serial.print(op16.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(mul16),15);
+  Serial.println(posit2float(op16),15);
 
-  //Posit16 div16 = Posit16::posit16_div(firstP16, secondP16);
-  Posit16 div16 = firstP16 - secondP16;
+  op16 = firstP16 / secondP16;
   Serial.print("Div(");
-  Serial.print(div16.value, BIN);
+  Serial.print(op16.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(div16),15); //*/
+  Serial.println(posit2float(op16),15);
+  
+  op16 = posit16_sqrt(firstP16);
+  Serial.print("Sqrt1(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+
+  op16 = posit16_sqrt(secondP16);
+  Serial.print("Sqrt2(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+  //*/
+
+  /*/Serial.print("Posit8 ? ");
+  while (Serial.available() == 0) ;
+  Posit8 firstP8 (Serial.parseFloat());
+  Serial.print("(");
+  Serial.print(firstP8.value, HEX);
+  Serial.print(") ");
+  Serial.println(posit2float(firstP8),5);
+  
+  Posit8 op8 = posit8_sqrt(firstP8);
+  Serial.print("Sqrt1(");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),5); //*/
 }
