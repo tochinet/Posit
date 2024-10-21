@@ -63,10 +63,10 @@ class Posit8 {
   //uint8_t value; // maybe in future
 
   public:   
-  uint8_t value; // first used int8_t, but issues with nar to nan conversion
+  uint8_t value; // tried int8_t as sign is msb, but nar to nan conversion bugged
   Posit8(uint8_t raw = 0): value(raw) {} // Default constructor from raw value
 
-  #ifdef byte // idem from "byte", exists in Arduino, but not in all C/C++ toolchains
+  #ifdef byte // idem from "byte", defined in Arduino, but not in all C/C++ toolchains
       Posit8(byte raw = 0): value(raw) {}
   #endif
   
@@ -128,7 +128,7 @@ class Posit8 {
         bitCount--;
       }
     }
-  } 
+  } // end of Posit(float) constructor
 
   Posit8(double v = 0.0) { // Construct from double by casting to float
     this -> value = Posit8((float) v).value;
@@ -138,7 +138,7 @@ class Posit8 {
     this->value = Posit8((float) v).value;
     /* TODO : construct from int algorithm : first get log2(N), then extract mantissa
     // algorithm copied from https://graphics.stanford.edu/~seander/bithacks.html
-    unsigned int v;	         // 32-bit value to find the log2 of 
+    uint32_t v;         // 32-bit value to find the log2 of 
     uint8_t exponent=0; // result of log2(v) will go here
     uint8_t shift; // each bit of the log2
     uint16_t mantissa=v; // Copy of the argument needed to fill mantissa!
@@ -154,8 +154,8 @@ class Posit8 {
   } // End of constructors
 
   // Helper method to split a posit into constituents
-  // arguments by reference to avoid copy
-  static void positSplit(Posit8 & p, boolean & sign, int8_t & exponent, uint8_t & mantissa) {
+  // arguments by reference to avoid copy of Posit and to write to as result
+  static void positSplit(Posit8& p, boolean& sign, int8_t& exponent, uint8_t& mantissa) {
     boolean bigNum; // true for abs(p)>=1
     int8_t bitCount; // posit bit counter for regime, exp and mantissa
  
@@ -166,9 +166,9 @@ class Posit8 {
     bitCount = 5; // starts at second regime bit
 
     //first extract exponent from regime bits
-    while ((p.value & (1 << bitCount)) == ((bigNum) << bitCount--)) { // still regime
-      if (bigNum) exponent += 1 << ES8;
-      else exponent -= 1 << ES8; // add/sub 2^es for each bit in regime
+    while ((p.value & (1 << bitCount)) == ((bigNum) << bitCount--)) { // still regime ?
+      if (bigNum) exponent += 1 << ES8; // add or ...
+      else exponent -= 1 << ES8;        // substract 2^es for each bit in regime
       if (bitCount == -1) break; // regime fills all bits, no space for exponent or mantissa
     }
     // then extract exponent lsb(s) from esBits
@@ -186,7 +186,7 @@ class Posit8 {
     }
     // then treat mantissa bits if any
     mantissa = p.value << (6 - bitCount); // all zeros automatically if none exist
-    mantissa |= 0x80; // add implied one;
+    mantissa |= 0x80; // add implied one as msb
   } // end of positSplit
 
   // Methods for posit8 arithmetic
@@ -228,7 +228,7 @@ class Posit8 {
       tempMantissa <<= 1; // eliminate msb uncoded
     }
 
-    // TODO move to separate positFill (sign, exponent, mantissa) routine
+    // TODO move to separate positFill (sign, exponent, mantissa) routine or constructor
     // Extract exponent lsb(s) for exponent field
     esBits = tempExponent & ((1 << ES8) - 1);
     tempExponent >>= ES8;
@@ -302,7 +302,7 @@ class Posit8 {
       //Serial.println("ERROR? : MSB is zero"); //*/
     }
     //sprintf(s, "sexp=%02x mant=%02x ", tempExponent, tempMantissa); Serial.print(s);
-
+    // PositFill (sign, exponent, mantissa)
     esBits = tempExponent & ((1 << ES8) - 1);
     tempExponent >>= ES8;
 
@@ -371,6 +371,7 @@ class Posit8 {
       sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
 
+    // PositFill(aSign ^ bSign,tempExponent,tempMentissa)
     esBits = tempExponent & ((1 << ES8) - 1);
     tempExponent >>= ES8;
 
@@ -408,17 +409,17 @@ class Posit8 {
   } // end of posit8_div function definition
 
   // Operator overloading for Posit8
-  Posit8 operator + (const Posit8 & other) const {
-    return posit8_add( * this, other);
+  Posit8 operator+ (const Posit8& other) const {
+    return posit8_add(*this, other);
   }
-  Posit8 operator - (const Posit8 & other) const {
-    return posit8_sub( * this, other);
+  Posit8 operator- (const Posit8& other) const {
+    return posit8_sub(*this, other);
   }
-  Posit8 operator * (const Posit8 & other) const {
-    return posit8_mul( * this, other);
+  Posit8 operator* (const Posit8& other) const {
+    return posit8_mul(*this, other);
   }
-  Posit8 operator / (const Posit8 & other) const {
-    return posit8_div( * this, other);
+  Posit8 operator/ (const Posit8& other) const {
+    return posit8_div(*this, other);
   }
 }; // end of Posit8 Class definition
 
@@ -484,7 +485,7 @@ class Posit16 {
           this -> value |= (1 << (bitCount + 1));
       }
     }
-  }
+  } // end of Posit16(float) constructor
 
   Posit16(double v = 0) { // Construct from double by casting to float32
     this -> value = Posit16((float)v).value;
@@ -492,10 +493,11 @@ class Posit16 {
 
   Posit16(int v = 0) { // Construct from int by casting to float for simplicity
     this -> value = Posit16((float)v).value;
+    // Should repeat Posit8 algorithm here ?
   }
 
   Posit16(Posit8 v = 0) {
-    this->value = v.value <<8 ;
+    this->value = v.value << 8;
   }
   // End of constructors
 
@@ -761,22 +763,31 @@ class Posit16 {
     return Posit16(tempResult);
   } // end of posit8_div function definition
 
-  //static Posit16 posit16_sqrt(Posit16 a) ;
-
   // Operator overloading for Posit16
-  Posit16 operator + (const Posit16 & other) const {
+  Posit16 operator+ (const Posit16& other) const {
     return posit16_add(*this, other);
   }
-  Posit16 operator - (const Posit16 & other) const {
+  Posit16 operator- (const Posit16& other) const {
     return posit16_sub(*this, other);
   }
-  Posit16 operator * (const Posit16 & other) const {
+  Posit16 operator* (const Posit16& other) const {
     return posit16_mul(*this, other);
   }
-  Posit16 operator / (const Posit16 & other) const {
+  Posit16 operator/ (const Posit16& other) const {
     return posit16_div(*this, other);
   }
-}; // end of Posit16 class definition
+  Posit16& operator+= (const Posit16& other) const {
+    return posit16_add(*this, other);
+  }
+  Posit16& operator-= (const Posit16& other) const {
+    return posit16_sub(*this, other);
+  }
+  Posit16& operator*= (const Posit16& other) const {
+    return posit16_mul(*this, other);
+  }
+  Posit16& operator/= (const Posit16& other) const {
+    return posit16_div(*this, other); //*/
+  }}; // end of Posit16 class definition
 
 static float posit2float(Posit8 & p) {
   boolean sign = false;
