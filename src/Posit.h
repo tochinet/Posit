@@ -58,6 +58,8 @@ struct splitPosit { // Not used yet
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 };
 
+class Posit16; // Forward-declared to allow for Posit8 casting
+
 class Posit8 {
   private:
   //uint8_t value; // maybe in future
@@ -70,6 +72,7 @@ class Posit8 {
       Posit8(byte raw = 0): value(raw) {}
   #endif
   
+  Posit8(Posit16); // forward declaration as well
   Posit8(float v = 0) { // Construct from float32, IEEE754 format
 
     this->value = 0;
@@ -776,7 +779,7 @@ class Posit16 {
   Posit16 operator/ (const Posit16& other) const {
     return posit16_div(*this, other);
   }
-  Posit16& operator+= (const Posit16& other) const {
+  /*Posit16& operator+= (const Posit16& other) const {
     return posit16_add(*this, other);
   }
   Posit16& operator-= (const Posit16& other) const {
@@ -786,8 +789,9 @@ class Posit16 {
     return posit16_mul(*this, other);
   }
   Posit16& operator/= (const Posit16& other) const {
-    return posit16_div(*this, other); //*/
-  }}; // end of Posit16 class definition
+    return posit16_div(*this, other); 
+  } //*/
+}; // end of Posit16 class definition
 
 static float posit2float(Posit8 & p) {
   boolean sign = false;
@@ -834,27 +838,35 @@ Posit8 posit8_sqrt(Posit8& a) {
     Posit8 approx = a; // Initial approximation, OK for small regimes
     if ((a.value > 0x60) || (a.value < 0x1F)) { // Regime >= 2 bits
       approx.value = (a.value<<1) & 0x7F; // Better initial approximation
-      Serial.print("Approx: ");Serial.println(posit2float(approx));
-      Serial.print("Approx: ");Serial.println(approx.value,HEX);
+      Serial.print("Approx (");Serial.print(approx.value,BIN);
+      Serial.print("): ");Serial.println(posit2float(approx)); //*/
     }
-    Posit8 half = Posit8(0.5); // use float, varies with ES8
+    if ((approx.value > 0x70) || (approx.value < 0x0F)) { // Regime >= 4 bits
+      approx.value = (approx.value<<1) & 0x7F; // Better initial approximation
+      Serial.print("Approx (");Serial.print(approx.value,BIN);
+      Serial.print("): ");Serial.println(posit2float(approx)); //*/
+    }
+    Posit8 half = Posit8(0.5); // using float constructor, varies with ES8
     
-    // 2 Newton-raphson iterations for 8 bits
-    approx = (approx + a / approx) * half;
-    approx = (approx + a / approx) * half;
-    approx = (approx + a / approx) * half;
+    // Newton-raphson iterations (not converging for 100 !)
+    for (int8_t iter=0; iter<9; iter++) {
+      Posit8 oldApprox=approx;
+      approx = (approx + a / approx) * half; // needs better rounding!
+      Serial.print("(");Serial.print(approx.value,BIN);
+      Serial.print(") "); //*/
+      if (approx.value == oldApprox.value) break; 
+    }
+    Serial.println();
     return approx;
   }
 
 Posit8 posit8_next(Posit8& a) {
-  uint8_t tempValue= a.value;
-  tempValue++;
-  Posit8 nextValue = tempValue;
+  Posit8 nextValue = (a.value++);
   return nextValue;
 }
 
 Posit8 posit8_prior(Posit8 a) {
-  Posit8 priorValue = (uint8_t)(a.value-1);
+  Posit8 priorValue = (uint8_t)(a.value--);
   return priorValue;
 }
 
@@ -903,12 +915,12 @@ Posit16 posit16_sqrt(Posit16 a) {
     Posit16 approx = a; // Initial approximation, OK for small regimes
     if ((a.value > 0x6000) || (a.value < 0x1FFF)) { // Regime >= 2 bits
       approx.value = (a.value<<1) & 0x7FFF; // Better initial approximation
-      Serial.print("Approx: ");Serial.println(posit2float(approx));
-      Serial.print("Approx: ");Serial.println(approx.value,HEX);
+      Serial.print("Approx(");Serial.print(approx.value,BIN);
+      Serial.print(") ");Serial.println(posit2float(approx));
     }
     Posit16 half = Posit16(0x3800); // 0.5 as ES16==2
     
-    // 5 Newton-raphson iterations for 16 bits
+    // 6 Newton-raphson iterations for 16 bits
     approx = (approx + a / approx) * half;
     approx = (approx + a / approx) * half;
     approx = (approx + a / approx) * half;
@@ -918,6 +930,6 @@ Posit16 posit16_sqrt(Posit16 a) {
     return approx;
   }
 
-/*Posit8 Posit8(Posit16 a) {
+/*/Posit8 Posit8(Posit16 a) {
   return (Posit8(a.value>>8));
-} // Forward define class ? */
+} // Forward defined class ? */
