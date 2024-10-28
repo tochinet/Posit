@@ -930,6 +930,6 @@ Posit16 posit16_sqrt(Posit16 a) {
     return approx;
   }
 
-/*/Posit8 Posit8(Posit16 a) {
+/*/Posit8 Posit8::Posit8(Posit16 a) {
   return (Posit8(a.value>>8));
 } // Forward defined class ? */
