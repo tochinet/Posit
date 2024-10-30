@@ -1,13 +1,14 @@
 ## Posit 0.1.2 - 2024.11.xx planned 
 
 * operator overloading for +=, -=, *=, /=
-* maybe better rounding (with compiler option)
-* 
-## current state !!! CAUTION, non-working !!!
+* better rounding (with compiler option)
+ 
+## current state !!! CAUTION, not working !!!
 
 * Posit16 <-> Posit8 translations added, untested
-* Added next, prior and sqrt functions
-* Implemented 2's complement storage rule (still buggy)
+* Added next, prior functions
+* Added sqrt for Posit8 and Posit 16 (test fails)
+* Implemented 2's complement storage rule (test fails)
 
 ## Posit 0.1.1 - 2024.09.15
 
