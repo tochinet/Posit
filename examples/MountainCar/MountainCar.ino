@@ -5,6 +5,7 @@
  * - 1323 bytes of memory is going to be difficult on UNO, from a 2048 total
  * - makes use of intermediate float for epsilon greedy decision
  * - makes use of many 16-bit ints and floats 
+ * - modified by ChatGPT to adapt reward to the car's speed at the goal position
  ****************************************************************************/
 #include "Posit.h"  // Include your Posit library
 
@@ -55,6 +56,14 @@ void updateState(int action) {
     if (position > position_max) position = position_max;
 }
 
+// Modified reward function based on speed at the goal
+Posit8 getReward() {
+    if (position >= position_max) {
+        return Posit8(1.0) - abs(velocity);  // Reward inversely proportional to speed
+    }
+    return Posit8(0);  // No reward otherwise
+}
+
 // SARSA Q-table update function
 void updateQTable(Posit8 pos, Posit8 vel, int action, Posit8 reward, Posit8 next_pos, Posit8 next_vel, int next_action) {
     int pos_index = (int)(pos.to_float() * 10 + 10);
@@ -78,7 +87,7 @@ void runEpisode() {
     while (position < position_max) {  // Run until reaching the goal position
         // Step environment and get reward
         updateState(action);
-        Posit8 reward = (position >= position_max) ? Posit8(1.0) : Posit8(0);
+        Posit8 reward = getReward();
 
         // Select next action using SARSA
         int next_action = getAction(position, velocity);
@@ -95,6 +104,11 @@ void setup() {
     Serial.begin(9600);
     randomSeed(analogRead(0));  // Seed randomness
     memset(Q_table, 0, sizeof(Q_table));  // Initialize Q-table to zero
+}
+
+void loop() {
+    runEpisode();
+    delay(100);  // Delay between episodes for debugging
 }
 
 void loop() {
