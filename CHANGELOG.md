@@ -10,11 +10,12 @@
 * Added sqrt for Posit8 and Posit 16 (test fails)
 * Implemented 2's complement storage rule (test fails)
 
-## Posit 0.1.1 - 2024.09.15
+## Posit 0.1.0 - 2024.09.15
 
 * Correction to meet Arduino library contribution rules
+* Release and included in the official [list of Arduino libraries](https://docs.arduino.cc/libraries/)
 
-## Posit 0.1.0 - 2024.09.12
+## Posit 0.1.0rc1 - 2024.09.12
 
 * Initial release
 * test sketch example, README, CHANGELOG, ...
