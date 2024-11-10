@@ -2,10 +2,6 @@
 
   Posit Library for Arduino
   
-  Restarted from release 0.1.0 to handle 2's complement globally.
-                               and unify the code into the 16-bit version
-                               include some rounding in the Posit8 class
-  
   This library provides posit8 and posit16 floating point arithmetic support
   for the Arduino environment, especially the memory-limited 8-bit AVR boards.
   Posits are a more efficient and more precise alternative to IEEE754 floats.
@@ -20,6 +16,13 @@
   - Full compliance with the Posit standard (2022)
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
   - Support of quire (very long accumulator)
+
+  CURRENT STATUS: Restarted from release 0.1.0 to 
+  1°) handle 2's complement globally
+  2°) unify the code into the 16-bit version
+  3°) include some rounding in the Posit8 class
+  At the moment, 2's complement is not active, and Posit16 substraction fails !
+  Code for sqrt , next and prior also has to be added back
 
   Copyright (c) 2024 Christophe Vermeulen
 
@@ -78,7 +81,9 @@ class Posit16 {
   Posit16(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) { 
     // tempExponent copied, will be modified
     // sign and mantissa by reference, won't be modified. Mantissa without leading 1 !
-    
+    Serial.print(sign?"-1.":"+1.");Serial.print(tempMantissa,BIN);
+    Serial.print("x2^");Serial.println(tempExponent);
+
     int8_t bitCount = 14; // start of regime
     uint16_t tempResult = 0;
     if (sign) tempResult = 0x8000;
@@ -134,12 +139,12 @@ class Posit16 {
 
     tempValue.tempFloat = v;
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
-    int8_t tempExponent = tempValue.tempBytes[3] - 127;
+    int8_t exponent = tempValue.tempBytes[3] - 127;
     uint16_t mantissa = (tempValue.tempBytes[2] << 8) + tempValue.tempBytes[1];
 
     // DONE moved to constructor from parts
-    //this->value = Posit16(sign, exponent, mantissa).value;
-    // separate ES8 lsbs in separate es field
+    this->value = Posit16(sign, exponent, mantissa).value;
+    /*/ separate ES8 lsbs in separate es field
     uint8_t esBits = tempExponent & ((1 << ES16) - 1);
     tempExponent >>= ES16;
 
@@ -169,8 +174,8 @@ class Posit16 {
       while (bitCount-->= 0) {
         if (mantissa & (1 << (16 - mantissacount++)))
           this -> value |= (1 << (bitCount + 1));
-      } // END of positFill */
-    }
+      } 
+    } // END of positFill */
   }
 
   Posit16(double v = 0) { // Construct from double by casting to float32
@@ -306,7 +311,9 @@ class Posit16 {
 
   static Posit16 posit16_sub(Posit16 a, Posit16 b) {
     if (a.value == 0x8000 || b.value == 0x8000) return Posit16((uint16_t) 0x8000);
+    Serial.print("sub(");Serial.print(b.value,BIN);
     if (b.value != 0) b.value = b.value ^ 0x8000; // change sign, except for zero (NaR)
+    Serial.print(") add(");Serial.print(b.value,BIN);Serial.print(")\n");
     return posit16_add(a, b);
   }
 
@@ -694,7 +701,7 @@ class Posit8 { // Class definition
   static Posit8 posit8_sub(Posit8 a, Posit8 b) {
     if (a.value == 0x80 || b.value == 0x80) return Posit8((uint8_t) 0x80);
     if (b.value != 0) b.value = b.value ^ 128; // change sign, except for zero (NaR)
-    return posit8_add(a, b); // temp solution to compile
+    return posit8_add(a, b); 
   }
 
   static Posit8 posit8_mul(Posit8 a, Posit8 b) {
