@@ -9,7 +9,7 @@
  * The test scenarios are available below for both Posit8 and Posit16,2
  */
 
-//#define ES8 0 // number of bits in exponent field (default is two in library)
+#define ES8 0 // number of bits in exponent field (default is two in library)
 //#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
 
@@ -65,8 +65,8 @@ void setup() {
   Serial.println(floatValue);
   Posit8 secondPosit (floatValue);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
-  Serial.println(posit2float(secondPosit));
-
+  Serial.println(posit2float(secondPosit)); 
+  
   Serial.print("First(");
   Serial.print(firstPosit.value, BIN);
   Serial.print(") ");
@@ -113,13 +113,11 @@ void setup() {
 
   /*/Serial.println("Creation of two posit16 values from input strings"); 
   Serial.println("First Posit16 ? ");
-  while (Serial.available() == 0) {
-   }
+  while (Serial.available() == 0) ;
   Posit16 firstP16 (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   Serial.println("Second Posit16 ? ");
-  while (Serial.available() == 0) { 
-  }
+  while (Serial.available() == 0) ;
   Posit16 secondP16 (Serial.parseFloat());
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   
@@ -195,7 +193,7 @@ void setup() {
       Serial.println(posit2float(div),4);
     } //*/
 
-  /**/Serial.println("Table of 16 random Posit16 results"); 
+  /*/Serial.println("Table of 16 random Posit16 results"); 
   randomSeed(millis());
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
@@ -263,7 +261,7 @@ void loop() { // Nothing here if not uncommented
   Serial.println(posit2float(op8),4); //*/
 
   /**/Serial.print("First Posit16 ? ");
-  while (Serial.available() == 0);
+  while (Serial.available() == 0) ;
   float floatValue=Serial.parseFloat();
   Posit16 firstP16 (floatValue);
   Serial.print(floatValue); Serial.print("(");
@@ -276,8 +274,9 @@ void loop() { // Nothing here if not uncommented
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   Serial.print(floatValue);Serial.print("(");
   Serial.print(secondP16.value, BIN); Serial.print(") ");
-  Serial.println(posit2float(secondP16),10); 
+  Serial.println(posit2float(secondP16),15); 
   
+  Serial.println("Test of operations");  
   Posit16 op16 = firstP16 + secondP16;
   Serial.print("Sum(");
   Serial.print(op16.value, BIN);
@@ -301,7 +300,7 @@ void loop() { // Nothing here if not uncommented
   Serial.print(op16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op16),15);
-  /*
+  
   op16 = posit16_sqrt(firstP16);
   Serial.print("Sqrt1(");
   Serial.print(op16.value, BIN);
@@ -312,6 +311,5 @@ void loop() { // Nothing here if not uncommented
   Serial.print("Sqrt2(");
   Serial.print(op16.value, BIN);
   Serial.print(") ");
-  Serial.println(posit2float(op16),15);
-  //*/
+  Serial.println(posit2float(op16),15); //*/
 }
