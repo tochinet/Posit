@@ -23,8 +23,8 @@
       This requires equality of ES8 and ES16
   3°) include some rounding in the Posit8 class
   At the moment, 2's complement is active in Posit16 and 4 ops work again
-  Code for sqrt, next and prior added back and tested. Posit16_sqrt lacks precision for some numbers !
-  Posit8 has no 2's complement yet. No improvements or tests since last version
+  Code for sqrt, next and prior added back and tested.
+  Posit8 2's complement still WIP. constructors work, most operations fail
 
   Copyright (c) 2024 Christophe Vermeulen
 
@@ -82,14 +82,15 @@ class Posit16 {
 
   Posit16(uint16_t v = 0): value(v) {} // default constructor, raw from unsigned
 
-  Posit16(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) { 
-    // tempExponent copied, will be modified
-    // sign and mantissa by reference, won't be modified. Mantissa without leading 1 !
+  // construc from parts (sign exponent and mantissa without leading 1)
+  Posit16(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) {
+    // tempExponent by value, will be modified
+    // sign and mantissa by reference, won't be modified.
     //Serial.print(sign?"-1.":"+1.");Serial.print(tempMantissa,BIN); // bug, missing leading zeros
     //Serial.print("x2^");Serial.println(tempExponent);
 
     int8_t bitCount = 14; // start of regime
-    uint16_t tempResult = 0;
+    uint16_t tempResult = 0; // better than this->value ?
 
     // Extract exponent lsb(s) for exponent field
     uint8_t esBits = tempExponent & ((1 << ES16) - 1);
@@ -179,7 +180,7 @@ class Posit16 {
       else exponent -= 1 << ES16; // add/sub 2^es for each bit in regime
       if (bitCount == -1) break; // all regime, no space for exponent or mantissa
     }
-    // threat exp bits if any, untested
+    // threat exp bits if any
     if (ES16 && (bitCount > -1)) {
       if (p.value & (1 << bitCount)) {
         exponent += ES16; // add one or two to exponent
@@ -199,7 +200,7 @@ class Posit16 {
 
   // Add methods for posit16 arithmetic
   static Posit16 posit16_add(Posit16 a, Posit16 b) {
-    bool aSign, bSign, tempSign=0;
+    bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa; // with leading one
     uint8_t esBits;
@@ -230,7 +231,7 @@ class Posit16 {
 
     // treat sign of result
     if (tempMantissa < 0) {
-      tempSign=1;
+      sign=1;
       tempMantissa = -tempMantissa; // back to positive
     }
 
@@ -244,7 +245,7 @@ class Posit16 {
     uint16_t mantissa16 = tempMantissa; // cast to 16bits
     //sprintf(s, "sexp=%02x mant=%05x ", tempExponent, tempMantissa); Serial.print(s);
 
-    return Posit16(tempSign, tempExponent, mantissa16);
+    return Posit16(sign, tempExponent, mantissa16);
   } // end of posit16_add function definition
 
   static Posit16 posit16_sub(Posit16 a, Posit16 b) {
@@ -254,8 +255,7 @@ class Posit16 {
   }
 
   static Posit16 posit16_mul(Posit16 a, Posit16 b) {
-    bool aSign, bSign, tempSign=0;
-    //bool aBigNum, bBigNum; // 0 between 0 and 1, 1 otherwise
+    bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -272,7 +272,7 @@ class Posit16 {
     positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, add exponents, multiply mantissas
-    tempSign = (aSign ^ bSign); //tempResult = 0x8000;
+    sign = (aSign ^ bSign); //tempResult = 0x8000;
     int tempExponent = (aExponent + bExponent);
     uint32_t tempMantissa = ((uint32_t) aMantissa * bMantissa) >> 14; // puts result in lower 16 bits and eliminates msb
     /*sprintf(s, "aexp=%02x mant=%04x ", aExponent, aMantissa); Serial.print(s);
@@ -284,17 +284,17 @@ class Posit16 {
       tempExponent++; // add power of two if product carried to MSB
       tempMantissa >>= 1; // eliminate uncoded msb otherwise (same exponent or less)
     }
-    while (tempMantissa < 0x10000L) { // if msb not reached, possible?
+    while (tempMantissa < 0x10000L) { // if msb not reached, impossible?
       tempExponent--; // divide by two
       tempMantissa <<= 1; // eliminate msb uncoded
       Serial.println("ERROR? : MSB is zero");
     }
     uint16_t mantissa16 = tempMantissa ; 
-    return Posit16(tempSign, tempExponent, mantissa16);
+    return Posit16(sign, tempExponent, mantissa16);
   } // end of posit16_mul function definition
 
   static Posit16 posit16_div(Posit16 a, Posit16 b) {
-    boolean aSign, bSign, tempSign;
+    boolean aSign, bSign, sign;
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -307,7 +307,7 @@ class Posit16 {
     positSplit(b, bSign, bExponent, bMantissa); // with leading one
 
     // xor signs, sub exponents, div mantissas
-    tempSign = (aSign ^ bSign) ;//tempResult = 0x8000;
+    sign = (aSign ^ bSign) ;//tempResult = 0x8000;
     int tempExponent = (aExponent - bExponent);
     // first solution to divide mantissas : use float (not efficient)
     union float_int { // for bit manipulation
@@ -321,7 +321,7 @@ class Posit16 {
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     uint16_t tempMantissa = tempValue.tempBytes[2] * 256 + tempValue.tempBytes[1]; // eliminate msb
     tempExponent += tempValue.tempBytes[3] - 127;
-    return Posit16(tempSign, tempExponent, tempMantissa);
+    return Posit16(sign, tempExponent, tempMantissa);
   } // end of posit8_div function definition
 
   // Operator overloading for Posit16
@@ -392,14 +392,14 @@ static Posit16 posit16_sqrt(Posit16& a) {
   //Serial.print("b org(");Serial.print(bMantissa,HEX);Serial.print(") "); //*/
 
   if (aExponent &1) {
-    bMantissa += 0x4000; // uneven powers of 2 need carried lsb
-    aMantissa += 0x4000; // both at the samre bit place !
+    bMantissa += 0x4000; // uneven powers of 2 need carried down exponent lsb
+    aMantissa += 0x4000; // both at the same bit place !
     aMantissa <<=1; // this can cause overflow, but unsigned substraction corrects it
   }   
   //Serial.print("aMant(");Serial.print(aMantissa,HEX);Serial.print(") "); //*/
   //Serial.print("guess(");Serial.print(bMantissa,HEX);Serial.print(") "); //*/
    
-  // Max 5 Newton-raphson iterations for 16 bits
+  // Max 5 Newton-raphson iterations for 16 bits, less if no change
   uint8_t iter=0;
   while (iter++<5) {
     uint16_t oldApprox=bMantissa;
@@ -411,7 +411,6 @@ static Posit16 posit16_sqrt(Posit16& a) {
     if (bMantissa == oldApprox) break;
   }
   bMantissa <<= 1 ; // correct for fixed point
-  //bMantissa <<= (iter-1) ; // correct for fixed point
   return Posit16(aSign,bExponent,bMantissa);
 }
 
