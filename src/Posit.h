@@ -207,6 +207,7 @@ class Posit16 {
     uint16_t tempResult = 0;
 
     if (a.value == 0x8000 || b.value == 0x8000) return Posit16((uint16_t) 0x8000); // NaR
+
     if (a.value == 0) return b;
     if (b.value == 0) return a;
 
@@ -216,6 +217,7 @@ class Posit16 {
     // align smaller number (mantissa) with bigger number
     if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
     if (aExponent < bExponent) aMantissa >>= (bExponent - aExponent);
+
     tempExponent = max(aExponent, bExponent);
     // TODO consider alternative to avoid 32 bit arithmetic if possible
     long longMantissa = (long) aMantissa + bMantissa; // Sign not treated here
@@ -272,6 +274,7 @@ class Posit16 {
     positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, add exponents, multiply mantissas
+
     sign = (aSign ^ bSign); //tempResult = 0x8000;
     tempExponent = (aExponent + bExponent);
     uint32_t longMantissa = ((uint32_t) aMantissa * bMantissa) >> 14; // puts result in lower 16 bits and eliminates msb
@@ -304,10 +307,11 @@ class Posit16 {
     if (a.value == 0 || a.value == 0x8000 || b.value == 0x4000) return a; // a==0 or NaR, b==1.0
 
     positSplit(a, aSign, aExponent, aMantissa);
+
     positSplit(b, bSign, bExponent, bMantissa); // with leading one
 
     // xor signs, sub exponents, div mantissas
-    sign = (aSign ^ bSign) ;//tempResult = 0x8000;
+    sign = (aSign ^ bSign) ;
     int tempExponent = (aExponent - bExponent);
     // first solution to divide mantissas : use float (not efficient)
     union float_int { // for bit manipulation
@@ -484,6 +488,7 @@ class Posit8 { // Class definition
   }
 
   Posit8(float v = 0) { // Construct from float32, IEEE754 format
+
     union float_int { // for bit manipulation
       float tempFloat; // little-endian in AVR8
       uint32_t tempInt; // little-endian as well
@@ -491,7 +496,6 @@ class Posit8 { // Class definition
     } tempValue;
     bool sign=0;
 
-    this->value = 0;
     if (v < 0) { // negative numbers
       if (v >= -EPSILON) return; // very small neg numbers ~=0, non-standard
       sign=true;
@@ -508,7 +512,6 @@ class Posit8 { // Class definition
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     int8_t tempExponent = tempValue.tempBytes[3] - 127; // remove IEEE754 bias
     uint8_t tempMantissa = tempValue.tempBytes[2];
-
     this->value = Posit8(sign, tempExponent, tempMantissa).value;
   }
 
@@ -601,7 +604,7 @@ class Posit8 { // Class definition
       tempMantissa -= bMantissa;
     }
 
-    // treat sign of result
+    // handle sign of result of mantissa addition
     if (tempMantissa < 0) {
       sign = 1;
       tempMantissa = -tempMantissa; // back to positive
@@ -630,6 +633,7 @@ class Posit8 { // Class definition
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa;
     int8_t bitCount;
+
     uint8_t tempResult = 0;
 
     if ((a.value == 0 && b.value != 0x80) || a.value == 0x80) return a; // 0, /0, NaR
@@ -654,6 +658,7 @@ class Posit8 { // Class definition
     while (tempMantissa < 256) { // if msb not reached, possible?
       tempExponent--; // divide by two
       tempMantissa <<= 1; // eliminate msb uncoded
+
       //sprintf(s, "MULunder exp=%02x mant=%02x ", tempExponent, tempMantissa); Serial.print(s);
       Serial.println("ERROR? : MSB is zero");
     }
@@ -685,7 +690,6 @@ class Posit8 { // Class definition
       uint32_t tempInt; // little-endian as well
       uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
     } tempValue;
-
     tempValue.tempFloat = ((float) aMantissa / (float) bMantissa); // 0.5 < 128/255 <= result <= 255/128 < 2
 
     tempValue.tempInt <<= 1; // eliminate sign, align exponent and mantissa
