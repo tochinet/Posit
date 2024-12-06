@@ -43,16 +43,16 @@ Fig.1 : General Posit Format (from Posit Standard(2022))
 </p>
 
 Precision extension (for example from 8 to 16 bits) can be done simply by adding zeros at the end, expressing the very same numbers. Posit arithmetic implies that there is never underflow or overflow, only "rounding errors". 
-For example, in posit8,2 arithmetic, 1024+224 is ... 1024 and there are no values expressing numbers between 16384 and 32768. 
+For example, in posit8,2 arithmetic, 1024+224 is ... 1024 and there are no values to express numbers between 16384 and 32768. 
 There are also as many numbers bigger than one than between zero and one.
 
 Examples of [tiny posit sizes vizualisations](https://github.com/stillwater-sc/universal/blob/main/docs/posit-refinement-viz.md) make it easier to understand the concept: since a posit2 number has 2 bits, it can obviously only express a set of 4 values. These are zero, one, minus one, and infinity(Not a Real, or NaR). Each time one bit is added, one value is inserted between each value already in the set. So a 3-bit posit will be able to express exactly the same four values, but also four new values : +/-2 and +/-0.5 if es=0, or +/-16 and +/-1/16 if es=2. Posit4,0 adds positive and negative values 1/4, 3/4, 3/2 and 4, and so on. An [interactive visualisation project](https://cse512-19s.github.io/FP-Well-Rounded/) shows you all possibilities for Posits up to 8 bits. You can also find [tables](https://github.com/stillwater-sc/universal/tree/main/docs/tables) of all supported values for several sizes and exponents.
 
-The number of exponent bits, in the field between the regime and the mantissa, extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and negatives). Most often the numbers expressed above and below one are reciprocal (their product is one), but this isn't true for values with mantissa bits : the reciprocal of 1.5 is 2/3=0.6666... but the posit number is 0.75 (3/4).
+The exponent field, between the regime and the mantissa, extends the limits of expressiveness, to the detriment of precision : posit3,1 numbers express exactly 4 and 0.25 instead of 2 and 0.5. Similarly, posit4,1 can express 0, 1/16, 1/4, 1/2, 1, 2, 4, 16 and infinity (and the corresponding negatives). Most often the numbers expressed above and below one are reciprocal (their product is one), but this isn't true for values with mantissa bits : the reciprocal of 1.5 is 2/3=0.6666... while the posit number is 0.75 (3/4).
 
 ### (Assumed) deviations from the standard
 The main purpose of this library is to provide a more efficient alternative to the existing float arithmetic on constrained microcontrollers (ATmega328). 
 This has several implications :
 - Support of 32-bit Posits is not considered, because the increased precision (vs. float32) is a non-objective, and float64 doesn't exist in Arduino.
 - The absence of overflow is a positive aspect of posits. However, underflow to zero is likely desirable for IoT applications etc. Hence the library will round down posits smaller than 1E-6 (1ppm) to zero by default for Posit8, and its square 1E-12 for Posit16. This is parametrizable by defining ESPILON in your sketch before including the library.
-- Rounding towards zero is preferred to "Rounding to nearest even" because it comes with much lower complexity (no guard/round/sticky bits to process). Beware that this means that 64.0 - 0.5 = 32.0. 
+- Rounding towards zero is preferred to "Rounding to nearest even" because it comes with much lower complexity (no guard/round/sticky bits to process). Beware that this means that 64.0 - 0.5 = 32.0. This may change in the future.
