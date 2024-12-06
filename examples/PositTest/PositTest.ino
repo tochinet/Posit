@@ -16,27 +16,39 @@
 double numbersList[16]= {0,NAN,1.0,-1.01,3.14159,-7.0,11.0,-15.0,50.0,-333.0,0.5,-0.09,0.05,-0.005,0.0001};
 // array of floats to choose randomly from for the table test scenarios
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println("Test of Posit library\n");
-
-  /*Serial.print("Input for seeding random ? ");
+void randomSeeder() {
+  Serial.print("Input for seeding random ? ");
   while (Serial.available() == 0);
   long seed = Serial.parseFloat() + millis();
   randomSeed (seed);
   Serial.println(seed);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars */
+}
 
-  /*/Serial.println("Creation of all posit8 values from raw integer");  
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Test of Posit library\n");
+
+  /*/Serial.println("Creation of all posit8 values from raw integer"); 
+  // This first check validates the posit2float method for Posit8 
+  Serial.println("         : 00xxxxxx : 01xxxxxx : 10xxxxxx : 11xxxxxx");
+  Serial.println("---------+----------+----------+----------+---------");
   for (byte raw = 0; raw < 0x40 ; raw ++) {
     Serial.print("xx");
     for (int8_t power=5; power>=0; power--) {
       if (raw & (1<<power)) Serial.print('1');else Serial.print('0');
     }
-    Serial.print(" : ");
+    Serial.print(" :");
     for (byte lsb = 0; lsb <4; lsb++) {
       Posit8 rawPosit ((uint8_t)(raw+(lsb<<6)));
-      Serial.print(" "); Serial.print(posit2float(rawPosit),7);
+      float floatValue=posit2float(rawPosit);
+      float floatCopy=abs(floatValue);
+      uint8_t decimals=7;
+      while (floatCopy >= 10.0) {
+        decimals--;
+        floatCopy/=10.0;
+       }
+      Serial.print(" "); Serial.print(floatValue,decimals);
     }
     Serial.println();
   } 
@@ -53,7 +65,7 @@ void setup() {
   Serial.println(); //*/
 
   /*/Serial.println("Table of 16 random Posit 8 results"); 
-  randomSeed(millis());
+  randomSeeder();
   Serial.println("    A   :    B   :   abin   :   bbin   :   sum    :   sub   :   mul   :   div");
   Serial.println("--------+--------+----------+----------+----------+---------+---------+---------");
   for (int j=0; j<16; j++) {
@@ -86,7 +98,7 @@ void setup() {
     } //*/
 
   /*/Serial.println("Table of 16 random Posit16 results"); 
-  randomSeed(millis());
+  randomSeeder();
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
   for (int j=0; j<16; j++) {
@@ -100,6 +112,8 @@ void setup() {
       Posit16 sub = firstPosit - secondPosit;  
       Posit16 mul = firstPosit * secondPosit;  
       Posit16 div = firstPosit / secondPosit; 
+      //Posit8 p8sub = sub; // casting to 8 bits
+      //sub = p8sub; // and back to 16 bits
 
       Serial.print(posit2float(firstPosit),6); // No way to align numbers in table
       Serial.print(" + ");
@@ -120,77 +134,67 @@ void setup() {
 }
 
 void loop() { 
-  /*/Serial.println("Creation of two posit8 values from input strings"); 
+  /**/Serial.println("Creation of two posit8 values from input strings"); 
   Serial.print("First Posit8 ? ");
   while (Serial.available() == 0) ;
   float floatValue = Serial.parseFloat();
-  Serial.println(floatValue); 
+  Serial.println(floatValue,4); 
   Posit8 firstPosit (floatValue);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   Serial.print("Second Posit8 ? ");
   while (Serial.available() == 0) ;
   floatValue = Serial.parseFloat();
-  Serial.println(floatValue);
+  Serial.println(floatValue,4);
   Posit8 secondPosit (floatValue);
   while (Serial.available() > 0) Serial.read(); // Eliminate extra chars
   
-  Serial.print("First(");
-  Serial.print(firstPosit.value, BIN);
-  Serial.print(") ");
-  Serial.println(posit2float(firstPosit),4);
-  Serial.print("Second(");
-  Serial.print(secondPosit.value, BIN);
-  Serial.print(") ");
-  Serial.println(posit2float(secondPosit),4);
-
-  
   Posit8 sum = Posit8::posit8_add(firstPosit, secondPosit);
   //Posit8 sum = firstPosit + secondPosit;
-  Serial.print("Sum(");
+  Serial.print("Sum (");
   Serial.print(sum.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sum),4);
 
   //Posit8 sub = Posit8::posit8_sub(firstPosit, secondPosit);  
   Posit8 sub = firstPosit - secondPosit;
-  Serial.print("Sub(");
+  Serial.print("Sub (");
   Serial.print(sub.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(sub),5); 	
   
   //Posit8 mul = Posit8::posit8_mul(firstPosit, secondPosit);  
   Posit8 mul = firstPosit * secondPosit;
-  Serial.print("Mul(");
+  Serial.print("Mul (");
   Serial.print(mul.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(mul),4); 	
   
   //Posit8 div = Posit8::posit8_div(firstPosit, secondPosit);  
   Posit8 div = firstPosit / secondPosit;
-  Serial.print("Div(");
+  Serial.print("Div (");
   Serial.print(div.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(div),5);
 
   Posit8 op8 = Posit8::posit8_sqrt(firstPosit);
-  Serial.print("Sqrt1(");
+  Serial.print("Sqrt1 (");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = Posit8::posit8_next(firstPosit);
-  Serial.print("Next(");
+  Serial.print("Next (");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); 
 
   op8 = Posit8::posit8_prior(firstPosit);
-  Serial.print("Prior(");
+  Serial.print("Prior (");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); //*/
 
-  /**/Serial.print("First Posit16 ? ");
+  /*/Serial.print("First Posit16 ? ");
   while (Serial.available() == 0) ;
   float floatValue=Serial.parseFloat();
   Posit16 firstP16 (floatValue);
