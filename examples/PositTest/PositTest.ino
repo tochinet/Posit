@@ -4,11 +4,13 @@
  * - Creation and printing of all (256) Posit8 and/or a few hundreds Posit16 values 
  * - Creation of (poorly aligned) tables of 16 randomly chosen pairs of values from a predefined list
  *    and printing of the values, BINary content, and results of 4 basic operations
- * - Input of two posits from Serial and test of four basic operations (with overloading), sqrt, next, prior
+ * - Input of two posits from Serial and test of four basic operations (with overloading),
+ *   sqrt, sin ,cos, next, prior
  *
  * The test scenarios are available below for both Posit8 and Posit16,2
  */
 
+#define DEBUG // comment out to avoid debug capabilities
 //#define ES8 0 // number of bits in exponent field (default is two in library)
 //#define EPSILON 0.0 // uncomment to disable rounding small values down to zero
 #include "Posit.h"
@@ -182,6 +184,36 @@ void loop() {
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
+  op8 = Posit8::posit8_sqrt(secondPosit);
+  Serial.print("Sqrt2 (");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4);
+
+  op8 = Posit8::posit8_sin(firstPosit);
+  Serial.print("Sin1 (");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4);
+
+  op8 = Posit8::posit8_sin(secondPosit);
+  Serial.print("Sin2 (");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4);
+
+  op8 = Posit8::posit8_cos(firstPosit);
+  Serial.print("Cos1 (");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4);
+
+  op8 = Posit8::posit8_cos(secondPosit);
+  Serial.print("Cos2 (");
+  Serial.print(op8.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op8),4);
+
   op8 = Posit8::posit8_next(firstPosit);
   Serial.print("Next (");
   Serial.print(op8.value, BIN);
@@ -194,7 +226,8 @@ void loop() {
   Serial.print(") ");
   Serial.println(posit2float(op8),4); //*/
 
-  /*/Serial.print("First Posit16 ? ");
+  /*/Serial.println("Creation of two posit8 values from input strings"); 
+  Serial.print("First Posit16 ? ");
   while (Serial.available() == 0) ;
   float floatValue=Serial.parseFloat();
   Posit16 firstP16 (floatValue);
@@ -243,6 +276,30 @@ void loop() {
 
   op16 = posit16_sqrt(secondP16);
   Serial.print("Sqrt2(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+  
+  op16 = posit16_sin(firstP16);
+  Serial.print("Sin1(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+
+  op16 = posit16_sin(secondP16);
+  Serial.print("Sin2(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+  
+  op16 = posit16_cos(firstP16);
+  Serial.print("Cos1(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+
+  op16 = posit16_cos(secondP16);
+  Serial.print("Cos2(");
   Serial.print(op16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op16),15);
