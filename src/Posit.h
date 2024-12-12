@@ -393,24 +393,24 @@ uint16_t fracDiv (uint16_t above, uint16_t below) {
 // external functions to provide global scope
 static Posit16 posit16_sqrt(Posit16& a) {
   bool aSign;
-  int8_t aExponent, bExponent;
-  uint16_t aMantissa, bMantissa;
+  int8_t aExponent, tempExponent;
+  uint16_t aMantissa, tempMantissa;
 
   if (a.value > 0x7FFF) return Posit16(0x8000); // NaR for negative and NaR
   if (a.value == 0) return Posit16(0); // Newton-Raphson would /0
     
   Posit16::positSplit(a, aSign, aExponent, aMantissa);
-  bExponent = aExponent >>1; // exponent sqrt = exponent square/2
+  tempExponent = aExponent >>1; // exponent sqrt = exponent square/2
   aMantissa &=0x7FFF; // exclude leading 1
   //aMantissa >>=1; // move fixed point one bit right to avoid overflows
-  bMantissa = (aMantissa>>1); // first approx, ok for even exponents  
+  tempMantissa = (aMantissa>>1); // first approx, ok for even exponents  
 #ifdef DEBUG
   //Serial.print("a no1(");Serial.print(aMantissa,HEX);Serial.print(") ");
-  //Serial.print("b org(");Serial.print(bMantissa,HEX);Serial.print(") ");
+  //Serial.print("b org(");Serial.print(tempMantissa,HEX);Serial.print(") ");
 #endif
 
   if (aExponent &1) {
-    bMantissa += 0x4000; // uneven powers of 2 need carried down exponent lsb
+    tempMantissa += 0x4000; // uneven powers of 2 need carried down exponent lsb
     aMantissa += 0x4000; // both at the same bit place !
     aMantissa <<=1; // this can cause overflow, but unsigned substraction corrects it
   }   
@@ -422,15 +422,39 @@ static Posit16 posit16_sqrt(Posit16& a) {
   // Max 5 Newton-raphson iterations for 16 bits, less if no change
   uint8_t iter=0;
   while (iter++<5) {
-    uint16_t oldApprox=bMantissa;
+    uint16_t oldApprox=tempMantissa;
     //approx = (approx + a / approx) /2; // Newton-Raphson equation
-    bMantissa += fracDiv(aMantissa-bMantissa,0x8000+bMantissa);
-    bMantissa >>=1;
+    tempMantissa += fracDiv(aMantissa-tempMantissa,0x8000+tempMantissa);
+    tempMantissa >>=1;
     //Serial.print("(");Serial.print(bMantissa,HEX);Serial.print(") ");
-    if (bMantissa == oldApprox) break;
+    if (tempMantissa == oldApprox) break;
   }
-  bMantissa <<= 1 ; // correct for fixed point
-  return Posit16(aSign,bExponent,bMantissa);
+  tempMantissa <<= 1 ; // correct for fixed point
+  return Posit16(aSign,tempExponent,tempMantissa);
+}
+
+static Posit16 posit16_sin(Posit16& a) {
+  /*bool aSign;
+  int8_t aExponent, tempExponent;
+  uint16_t aMantissa, tempMantissa;*/
+  
+  Posit16 Pi16 = 3.141602; // closest value
+  Posit16 HalfPi16 = (uint16_t)0x4491; //=1.57079633+.00000445;
+  //while (a > Pi16) a -= Pi16; // < not defined yet
+  //while (a < -Pi16) a += Pi16; // < not defined yet
+  
+  // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
+  // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 
+  // TODO create /2 routine for Posit16 and Posit8 (exponent--)
+  Posit16 aHalfSquare = a*(a/2);
+  Posit16 tempResult = (a/3)*((Posit16)3-aHalfSquare);
+  return tempResult;
+}
+
+static Posit16 posit16_cos(Posit16& a) {
+  // first iteration : cos x = 1 - x^2/2
+  Posit16 tempResult = (Posit16)1- a*(a/2);
+  return tempResult;
 }
 
 Posit16 posit16_next(Posit16& a) {
@@ -715,10 +739,8 @@ class Posit8 { // Class definition
       sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
 #endif
-
     return Posit8(sign,tempExponent,tempMantissa);
   } // end of posit8_div function definition
-
 
 static Posit8 posit8_sqrt(Posit8& a) {
 
@@ -750,6 +772,22 @@ static Posit8 posit8_sqrt(Posit8& a) {
   }
   Serial.println();
   return approx;
+}
+
+static Posit8 posit8_sin(Posit8& a) {
+  //Posit8 Pi8 = 3.141602; // closest value
+  //Posit8 HalfPi8 = (uint8_t)0x44; //=1.57079633+.00000445;
+  
+  // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
+  Posit8 aHalfSquare = a*(a/2);
+  Posit8 tempResult = (a/3)*((Posit8)3-aHalfSquare);
+  return tempResult;
+}
+
+static Posit8 posit8_cos(Posit8& a) {
+  // first iteration : cos x = 1 - x^2/2
+  Posit8 tempResult = (Posit8)1- a*(a/2);
+  return tempResult;
 }
 
 static Posit8 posit8_next(Posit8& a) {
