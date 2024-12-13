@@ -1,6 +1,6 @@
 /*************************************************************************************
 
-  Posit Library for Arduino v0.1.2rc1
+  Posit Library for Arduino v0.1.2
   
   This library provides posit8 and posit16 floating point arithmetic support
   for the Arduino environment, especially the memory-limited 8-bit AVR boards.
@@ -17,10 +17,10 @@
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
   - Support of quire (very long accumulator)
 
-  CURRENT STATUS: Now handles 2's complement correctly for Posit8 and posit16
+  CURRENT STATUS: 2's complement issue solved, sin/cos routines added
   Also includes some rounding in the Posit8 class
-  TODO : reduce library size if ES8 == ES16 by using 16-bit code for both
-  TODO : add sin/cos/tan using Taylor or Chebyshev
+  TODO : reduce library size if ES8 == ES16 by using 16-bit code for both (posit2Float done)
+  TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
   
   Copyright (c) 2024 Christophe Vermeulen
 
@@ -283,11 +283,13 @@ class Posit16 {
 
     // Split posit into constituents
     positSplit(a, aSign, aExponent, aMantissa);
-    positSplit(b, bSign, bExponent, bMantissa);
+    positSplit(b, bSign, bExponent, bMantissa); // Mantissas with leading 1
 
     // xor signs, add exponents, multiply mantissas
     sign = (aSign ^ bSign); //tempResult = 0x8000;
     tempExponent = (aExponent + bExponent);
+
+    // TODO : consider using 16-bit fractional multiplication routine (similar to fracDiv)
     uint32_t longMantissa = ((uint32_t) aMantissa * bMantissa) >> 14; // puts result in lower 16 bits and eliminates msb
 #ifdef DEBUG
     /*sprintf(s, "aexp=%02x mant=%04x ", aExponent, aMantissa); Serial.print(s);
@@ -326,17 +328,19 @@ class Posit16 {
     sign = (aSign ^ bSign) ;
     int tempExponent = (aExponent - bExponent);
     // first solution to divide mantissas : use float (not efficient)
+    // TODO consider using fracdiv routine, like sqrt
     union float_int { // for bit manipulation
       float tempFloat; // little endian in AVR8
       uint32_t tempInt; // little-endian as well
       uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
     } tempValue;
 
+    // 0x8000 <= aMantissa and bMantissa <= 0xFFF0, 11-bit mantissa
     tempValue.tempFloat = ((float) aMantissa / (float) bMantissa); // result should be between 0.5 and 2
 
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     uint16_t tempMantissa = tempValue.tempBytes[2] * 256 + tempValue.tempBytes[1]; // eliminate msb
-    tempExponent += tempValue.tempBytes[3] - 127;
+    tempExponent += tempValue.tempBytes[3] - 127; // correct if necessary
     return Posit16(sign, tempExponent, tempMantissa);
   } // end of posit8_div function definition
 
@@ -424,6 +428,7 @@ static Posit16 posit16_sqrt(Posit16& a) {
   while (iter++<5) {
     uint16_t oldApprox=tempMantissa;
     //approx = (approx + a / approx) /2; // Newton-Raphson equation
+    //mantissa = mantissa + (aMantissa - mantissa) / (1 + mantissa) // applied to 1.xxx numbers
     tempMantissa += fracDiv(aMantissa-tempMantissa,0x8000+tempMantissa);
     tempMantissa >>=1;
     //Serial.print("(");Serial.print(bMantissa,HEX);Serial.print(") ");
