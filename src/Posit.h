@@ -1,6 +1,6 @@
 /*************************************************************************************
 
-  Posit Library for Arduino v0.1.2
+  Posit Library for Arduino v0.2.0rc1
   
   This library provides posit8 and posit16 floating point arithmetic support
   for the Arduino environment, especially the memory-limited 8-bit AVR boards.
@@ -17,9 +17,9 @@
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
   - Support of quire (very long accumulator)
 
-  CURRENT STATUS: 2's complement issue solved, sin/cos routines added
-  Also includes some rounding in the Posit8 class
-  TODO : reduce library size if ES8 == ES16 by using 16-bit code for both (posit2Float done)
+  CURRENT STATUS: provides + - * / sqrt, trig routines (with conditional compilation)
+  Changed the class names to posit8_t and posit16_t for compatibility with other implementations
+  WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (posit2Float done)
   TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
   
   Copyright (c) 2024 Christophe Vermeulen
@@ -45,13 +45,18 @@
   See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
 
-#ifndef EPSILON          // Define EPSILON as 0.0 in sketch for standard compliance
-#define EPSILON 0.000001 // results smaller than EPSILON are rounded to zero in Posit8. 
-#endif                   // and EPSILON^2 in Posit16 arithmetic (10^-12)
+#ifndef EPSILON     // Define EPSILON in sketch for rounding down ...
+#define EPSILON 0.0 // ... results smaller than EPSILON to zero in Posit8 ... 
+#endif              // ... and EPSILON^2 in Posit16 arithmetic
+// This may allow to speed up RL algorithms and reduce memory usage of sketch, even if 
+// explicitly not recommended according to https://posithub.org/docs/Posits4.pdf p.7.
+
 #ifndef ES8   // ES8 can be set in sketch to 0 or 1 ...
 #define ES8 2 // or defaults to two exponent bits (standard)
 #endif
 #define ES16 2 // Posit 16 always have two-bits exponent field
+//#define ES32 2 // No support envisioned for Posit32.
+//#define NOTRIG // uncomment/put in sketch to exclude trig routines
 
 #ifdef DEBUG
 char s[30]; // temporary C string for Serial debug using sprintf
@@ -63,19 +68,19 @@ struct splitPosit { // Not in use. TODO check if it reduces or increases memory 
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 }; 
 
-class Posit8; // Forward-declared for casting from Posit8 to Posit16
+class posit8_t; // Forward-declared for casting from posit8_t to posit16_t
 
-class Posit16 {
+class posit16_t {
   private:
   //uint16_t value; // moved to public since used by posit2float
 
   public: 
   uint16_t value;
 
-  Posit16(uint16_t v = 0): value(v) {} // default constructor, raw from unsigned
+  posit16_t(uint16_t v = 0): value(v) {} // default constructor, raw from unsigned
 
   // construct from parts (sign, exponent and mantissa without leading 1)
-  Posit16(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) {
+  posit16_t(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) {
     // tempExponent by value, will be modified
     // sign and mantissa by reference to avoid copy, won't be modified.
     // REJECTED using mantissa with leading one. But mantissa might be moved down someday
@@ -119,7 +124,7 @@ class Posit16 {
     this->value=sign?~tempResult+1:tempResult;
   } // end of posit16 constructor from parts
 
-  Posit16(float v = 0) { // Construct from float32, IEEE754 format
+  posit16_t(float v = 0) { // Construct from float32, IEEE754 format
     union float_int { // for bit manipulation
       float tempFloat;
       uint32_t tempInt; // little-endian in AVR
@@ -145,15 +150,15 @@ class Posit16 {
     uint16_t mantissa = (tempValue.tempBytes[2] << 8) + tempValue.tempBytes[1];
     // 7 and >>1 if leading one, but no need to "recreate" leading one
 
-    this->value = Posit16(sign, exponent, mantissa).value;
+    this->value = posit16_t(sign, exponent, mantissa).value;
   }
 
-  Posit16(double v = 0) { // Construct from double by casting to float32
-    this->value = Posit16((float)v).value;
+  posit16_t(double v = 0) { // Construct from double by casting to float32
+    this->value = posit16_t((float)v).value;
   }
 
-  Posit16(int v = 0) { // Construct from int by casting to float for simplicity
-    this->value = Posit16((float)v).value;
+  posit16_t(int v = 0) { // Construct from int by casting to float for simplicity
+    this->value = posit16_t((float)v).value;
     /* TODO : construct from int algorithm : first get log2(N), then extract mantissa
     // algorithm copied from https://graphics.stanford.edu/~seander/bithacks.html
     uint32_t v;         // 32-bit value to find the log2 of 
@@ -167,14 +172,14 @@ class Posit16 {
     exponent |= (v >> 1);
     // then extract mantissa (all other bits shifted right). 
     mantissa <<= 16-exponent;
-    // then fill Posit8(sign, exponent, mantissa);
+    // then fill posit(sign, exponent, mantissa);
     */  }
 
-  Posit16(Posit8) ; // forward declaration
+  posit16_t(posit8_t) ; // forward declaration
   // End of constructors
 
-  static void positSplit(Posit16 p, bool& sign, int8_t& exponent, uint16_t& mantissa) {
-    // Reads Posit16 by value, writes sign, exponent and mantissa (with leading 1)
+  static void positSplit(posit16_t p, bool& sign, int8_t& exponent, uint16_t& mantissa) {
+    // Reads posit16_t by value, writes sign, exponent and mantissa (with leading 1)
     bool bigNum; // true for abs(p) >= 1
     int8_t bitCount= 5+8; // posit bit counter for regime, exp and mantissa
 
@@ -207,10 +212,10 @@ class Posit16 {
     // then treat mantissa bits if any
     mantissa = p.value << (14 - bitCount); // all zeros automatically if none exist
     mantissa |= 0x8000; // add implied one;
-  } // end of positSplit for Posit16
+  } // end of positSplit for posit16_t
 
   // Add methods for posit16 4 operations (+ - * /)
-  static Posit16 posit16_add(Posit16 a, Posit16 b) {
+  static posit16_t posit16_add(posit16_t a, posit16_t b) {
     bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent, tempExponent;
     uint16_t aMantissa, bMantissa, tempMantissa; // with leading one
@@ -218,7 +223,7 @@ class Posit16 {
     int8_t bitCount = 14; // posit bit counter, start of regime
     uint16_t tempResult = 0;
 
-    if (a.value == 0x8000 || b.value == 0x8000) return Posit16((uint16_t) 0x8000); // NaR
+    if (a.value == 0x8000 || b.value == 0x8000) return posit16_t((uint16_t) 0x8000); // NaR
     if (a.value == 0) return b;
     if (b.value == 0) return a;
 
@@ -245,7 +250,7 @@ class Posit16 {
       sign=1;
       longMantissa = -longMantissa; // back to positive
     }
-    if (longMantissa == 0) return Posit16((uint16_t) 0); // could use EPSILON here ?
+    if (longMantissa == 0) return posit16_t((uint16_t) 0); // could use EPSILON here ?
 
     if (longMantissa > 0xFFFFL) tempExponent++; // one more power of two if sum carries over
     else longMantissa <<= 1; // eliminate uncoded msb otherwise (same exponent or less)
@@ -260,15 +265,15 @@ class Posit16 {
     //sprintf(s, "sexp=%02x mant=%05x ", tempExponent, tempMantissa); Serial.print(s);
 #endif
 
-    return Posit16(sign, tempExponent, tempMantissa);
+    return posit16_t(sign, tempExponent, tempMantissa);
   } // end of posit16_add function definition
 
-  static Posit16 posit16_sub(Posit16 a, Posit16 b) {
+  static posit16_t posit16_sub(posit16_t a, posit16_t b) {
     b.value = -b.value; // 2's complement solves everything for us, 0 and NaR are conserved
     return posit16_add(a, b);
   }
 
-  static Posit16 posit16_mul(Posit16 a, Posit16 b) {
+  static posit16_t posit16_mul(posit16_t a, posit16_t b) {
     bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent, tempExponent;
     uint16_t aMantissa, bMantissa, tempMantissa;
@@ -308,17 +313,17 @@ class Posit16 {
       Serial.println("ERROR posit16_mul : MSB is zero");
     }
     tempMantissa = longMantissa ; 
-    return Posit16(sign, tempExponent, tempMantissa);
+    return posit16_t(sign, tempExponent, tempMantissa);
   } // end of posit16_mul function definition
 
-  static Posit16 posit16_div(Posit16 a, Posit16 b) {
+  static posit16_t posit16_div(posit16_t a, posit16_t b) {
     boolean aSign, bSign, sign;
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
     uint16_t tempResult = 0;
 
-    if (b.value == 0x8000 || b.value == 0) return Posit16((uint16_t) 0x8000); // NaR if /0 or /NaR
+    if (b.value == 0x8000 || b.value == 0) return posit16_t((uint16_t) 0x8000); // NaR if /0 or /NaR
     if (a.value == 0 || a.value == 0x8000 || b.value == 0x4000) return a; // a==0 or NaR, b==1.0
 
     positSplit(a, aSign, aExponent, aMantissa);
@@ -341,39 +346,39 @@ class Posit16 {
     tempValue.tempInt <<= 1; // eliminate sign, byte-align exponent and mantissa
     uint16_t tempMantissa = tempValue.tempBytes[2] * 256 + tempValue.tempBytes[1]; // eliminate msb
     tempExponent += tempValue.tempBytes[3] - 127; // correct if necessary
-    return Posit16(sign, tempExponent, tempMantissa);
-  } // end of posit8_div function definition
+    return posit16_t(sign, tempExponent, tempMantissa);
+  } // end of posit16_div function definition
 
   // Operator overloading for Posit16
-  Posit16 operator + (const Posit16& other) const {
+  posit16_t operator + (const posit16_t& other) const {
     return posit16_add(*this, other);
   }
-  Posit16 operator - (const Posit16& other) const {
+  posit16_t operator - (const posit16_t& other) const {
     return posit16_sub(*this, other);
   }
-  Posit16 operator * (const Posit16& other) const {
+  posit16_t operator * (const posit16_t& other) const {
     return posit16_mul(*this, other);
   }
-  Posit16 operator / (const Posit16& other) const {
+  posit16_t operator / (const posit16_t& other) const {
     return posit16_div(*this, other);
   }
-  Posit16& operator += (const Posit16& other) {
+  posit16_t& operator += (const posit16_t& other) {
   *this= posit16_add(*this, other);
   return *this;
   }
-  Posit16& operator -= (const Posit16& other) {
+  posit16_t& operator -= (const posit16_t& other) {
     *this= posit16_sub(*this, other);
     return *this;
   }
-  Posit16& operator *= (const Posit16& other) {
+  posit16_t& operator *= (const posit16_t& other) {
     *this= posit16_mul(*this, other);
     return *this;
   }
-  Posit16& operator /= (const Posit16& other) {
+  posit16_t& operator /= (const posit16_t& other) {
     *this= posit16_div(*this, other);
     return *this;
   }
-}; // end of Posit16 class definition
+}; // end of posit16_t class definition
 
 // Fractional division routine for sqrt calculation
 uint16_t fracDiv (uint16_t above, uint16_t below) {
@@ -395,15 +400,15 @@ uint16_t fracDiv (uint16_t above, uint16_t below) {
 }
 
 // external functions to provide global scope
-static Posit16 posit16_sqrt(Posit16& a) {
+static posit16_t posit16_sqrt(posit16_t& a) {
   bool aSign;
   int8_t aExponent, tempExponent;
   uint16_t aMantissa, tempMantissa;
 
-  if (a.value > 0x7FFF) return Posit16(0x8000); // NaR for negative and NaR
-  if (a.value == 0) return Posit16(0); // Newton-Raphson would /0
+  if (a.value > 0x7FFF) return posit16_t(0x8000); // NaR for negative and NaR
+  if (a.value == 0) return posit16_t(0); // Newton-Raphson would /0
     
-  Posit16::positSplit(a, aSign, aExponent, aMantissa);
+  posit16_t::positSplit(a, aSign, aExponent, aMantissa);
   tempExponent = aExponent >>1; // exponent sqrt = exponent square/2
   aMantissa &=0x7FFF; // exclude leading 1
   //aMantissa >>=1; // move fixed point one bit right to avoid overflows
@@ -435,44 +440,62 @@ static Posit16 posit16_sqrt(Posit16& a) {
     if (tempMantissa == oldApprox) break;
   }
   tempMantissa <<= 1 ; // correct for fixed point
-  return Posit16(aSign,tempExponent,tempMantissa);
+  return posit16_t(aSign,tempExponent,tempMantissa);
 }
 
-static Posit16 posit16_sin(Posit16& a) {
+#ifndef NOTRIG
+static posit16_t posit16_sin(posit16_t& a) {
   /*bool aSign;
   int8_t aExponent, tempExponent;
   uint16_t aMantissa, tempMantissa;*/
   
-  Posit16 Pi16 = 3.141602; // closest value
-  Posit16 HalfPi16 = (uint16_t)0x4491; //=1.57079633+.00000445;
+  posit16_t Pi16 = 3.141602; // closest value
+  posit16_t HalfPi16 = (uint16_t)0x4491; //=1.57079633+.00000445;
   //while (a > Pi16) a -= Pi16; // < not defined yet
   //while (a < -Pi16) a += Pi16; // < not defined yet
   
   // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
   // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 
-  // TODO create /2 routine for Posit16 and Posit8 (exponent--)
-  Posit16 aHalfSquare = a*(a/2);
-  Posit16 tempResult = (a/3)*((Posit16)3-aHalfSquare);
+  // TODO create /2 routine for posit16_t and posit8_t (exponent--)
+  posit16_t aHalfSquare = a*(a/2);
+  posit16_t tempResult = (a/3)*((posit16_t)3-aHalfSquare);
   return tempResult;
 }
 
-static Posit16 posit16_cos(Posit16& a) {
+static posit16_t posit16_cos(posit16_t& a) {
   // first iteration : cos x = 1 - x^2/2
-  Posit16 tempResult = (Posit16)1- a*(a/2);
+  posit16_t tempResult = (posit16_t)1- a*(a/2);
   return tempResult;
 }
 
-Posit16 posit16_next(Posit16& a) {
+static posit16_t posit16_tan(posit16_t& a) {
+  // first iteration : tan x = x + x^3/3 = x/3 * (3+x^2)
+  posit16_t aSquare = a*a;
+  posit16_t tempResult = (a/3)*((posit16_t)3+aSquare);
+  return tempResult;
+}
+#endif
+
+posit16_t posit16_next(posit16_t& a) {
   uint16_t nextValue = a.value+1;
-  return Posit16(nextValue);
+  return posit16_t(nextValue);
 }
 
-Posit16 posit16_prior(Posit16& a) {
+posit16_t posit16_prior(posit16_t& a) {
   uint16_t priorValue = a.value-1;
-  return Posit16(priorValue);
+  return posit16_t(priorValue);
 }
 
-class Posit8 { // Class definition
+posit16_t posit16_abs(posit16_t a) {
+  return posit16_t(a.value&0x8000 ? -1 : a.value ? 0 : 1);
+}
+
+posit16_t posit16_sign(posit16_t a) {
+  if (a.value == 0 || a.value == 0x8000) return a;
+  return posit16_t(a.value & 0x8000 ? 0xC000 : 0x4000);
+}
+
+class posit8_t { // Class definition
   private:
   //uint8_t value; // maybe in future
 
@@ -480,17 +503,17 @@ class Posit8 { // Class definition
   uint8_t value; // tried int8_t as sign is msb, but nar to nan conversion bugged
                  // Still with 2's complement, int8_t should be possible/better
 
-  Posit8(uint8_t raw = 0): value(raw) {} // Construct from raw unsigned byte
+  posit8_t(uint8_t raw = 0): value(raw) {} // Construct from raw unsigned byte
  
   #ifdef byte // Exists in Arduino, but not in all C/C++ toolchains
-      Posit8(byte raw = 0): value(raw) {}  { // Construct from raw byte type (unsigned char)
+      posit8_t(byte raw = 0): value(raw) {}  { // Construct from raw byte type (unsigned char)
   #endif //*/
   
-  Posit8(Posit16 v=0) { // casting from Posit16 to Posit8
+  posit8_t(posit16_t v=0) { // casting from posit16_t to posit8_t
     this->value = (v.value & 128) ? (v.value >> 8) : (v.value >> 8)+1-2*(v.value<0); // first try at rounding
   }
 
-  Posit8(bool& sign, int8_t tempExponent, uint8_t& tempMantissa) {
+  posit8_t(bool& sign, int8_t tempExponent, uint8_t& tempMantissa) {
     int8_t bitCount = 6; // first regime bit for Posit8
 #ifdef DEBUG
     /*Serial.print(sign?"-1.":"+1.");
@@ -533,7 +556,7 @@ class Posit8 { // Class definition
     //Serial.print(" ("); Serial.print(this->value,BIN); Serial.print(") ");
   }
 
-  Posit8(float v = 0) { // Construct from float32, IEEE754 format
+  posit8_t(float v = 0) { // Construct from float32, IEEE754 format
     union float_int { // for bit manipulation
       float tempFloat; // little-endian in AVR8
       uint32_t tempInt; // little-endian as well
@@ -559,21 +582,21 @@ class Posit8 { // Class definition
     int8_t tempExponent = tempValue.tempBytes[3] - 127; // remove IEEE754 bias
     uint8_t tempMantissa = tempValue.tempBytes[2];
 
-    this->value = Posit8(sign, tempExponent, tempMantissa).value;
+    this->value = posit8_t(sign, tempExponent, tempMantissa).value;
   }
 
-  Posit8(double v = 0.0) { // Construct from double by casting to float
-    this -> value = Posit8((float) v).value;
+  posit8_t(double v = 0.0) { // Construct from double by casting to float
+    this -> value = posit8_t((float) v).value;
   }
 
-  Posit8(int v = 0) { // Construct from int by casting to float for simplicity
-    this->value = Posit8((float) v).value; // Now casting to float for simplicity
+  posit8_t(int v = 0) { // Construct from int by casting to float for simplicity
+    this->value = posit8_t((float) v).value; // Now casting to float for simplicity
   }
   // End of constructors
 
   // Helper method to split a posit into constituents
   // arguments by reference to write to as result
-  static void positSplit(Posit8 p, bool& sign, int8_t& exponent, uint8_t& mantissa) {
+  static void positSplit(posit8_t p, bool& sign, int8_t& exponent, uint8_t& mantissa) {
     bool bigNum; // true for abs(p)>=1
     int8_t bitCount=5; // posit bit counter for regime, exp and mantissa
  
@@ -611,14 +634,14 @@ class Posit8 { // Class definition
   } // end of positSplit
 
   // Methods for posit8 arithmetic
-  static Posit8 posit8_add(Posit8 a, Posit8 b) {
+  static posit8_t posit8_add(posit8_t a, posit8_t b) {
     bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent, tempExponent;
     uint8_t aMantissa, bMantissa, tempMantissa; // with leading one
     int8_t bitCount; // posit bit counter
     uint8_t tempResult = 0;
 
-    if (a.value == 0x80 || b.value == 0x80) return Posit8((uint8_t) 0x80); // NaR
+    if (a.value == 0x80 || b.value == 0x80) return posit8_t((uint8_t) 0x80); // NaR
     if (a.value == 0) return b;
     if (b.value == 0) return a;
 
@@ -643,7 +666,7 @@ class Posit8 { // Class definition
       sign = 1;
       longMantissa = -longMantissa; // back to positive
     }
-    if (longMantissa ==0) return Posit8((uint8_t)0);
+    if (longMantissa ==0) return posit8_t((uint8_t)0);
 
     if (longMantissa > 255) tempExponent++; // add one power of two if sum carries to bit8
     else longMantissa <<= 1; // eliminate uncoded msb otherwise (same exponent or less)
@@ -658,15 +681,15 @@ class Posit8 { // Class definition
     //sprintf(s, "sexp=%02x mant=%02x ", tempExponent, tempMantissa); Serial.print(s);
 #endif
     tempMantissa = longMantissa;
-    return Posit8(sign,tempExponent,tempMantissa);
+    return posit8_t(sign,tempExponent,tempMantissa);
   } // end of posit8_add function definition
 
-  static Posit8 posit8_sub(Posit8 a, Posit8 b) {
+  static posit8_t posit8_sub(posit8_t a, posit8_t b) {
     b.value = -b.value;
     return posit8_add(a, b); 
   }
 
-  static Posit8 posit8_mul(Posit8 a, Posit8 b) {
+  static posit8_t posit8_mul(posit8_t a, posit8_t b) {
     bool aSign, bSign, sign = false;
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa;
@@ -707,21 +730,21 @@ class Posit8 { // Class definition
 #endif
 
     uint8_t mantissa8 = tempMantissa;
-    return Posit8(sign,tempExponent,mantissa8);
+    return posit8_t(sign,tempExponent,mantissa8);
   } // end of posit8_mul function definition
 
-  static Posit8 posit8_div(Posit8 a, Posit8 b) { // args by ref doesn't compile
+  static posit8_t posit8_div(posit8_t a, posit8_t b) { // args by ref doesn't compile
     bool aSign, bSign, sign = false;
     int8_t aExponent, bExponent;
     uint8_t aMantissa, bMantissa, esBits;
     int8_t bitCount; // posit bit counter
     uint8_t tempResult = 0;
 
-    if (b.value == 0x80 || b.value == 0) return Posit8((uint8_t) 0x80); // NaR if /0 or /NaR
+    if (b.value == 0x80 || b.value == 0) return posit8_t((uint8_t) 0x80); // NaR if /0 or /NaR
     if (a.value == 0 || a.value == 0x80 || b.value == 0x40) return a; // a==0 or NaR, b==1.0
 
-    Posit8::positSplit(a, aSign, aExponent, aMantissa);
-    Posit8::positSplit(b, bSign, bExponent, bMantissa);
+    posit8_t::positSplit(a, aSign, aExponent, aMantissa);
+    posit8_t::positSplit(b, bSign, bExponent, bMantissa);
 
     // xor signs, sub exponents, div mantissas
     if (aSign ^ bSign) sign = true ; // tempResult = 0x80;
@@ -744,15 +767,15 @@ class Posit8 { // Class definition
       sprintf(s, "bexp=%02x mant=%02x ", bExponent, bMantissa); Serial.println(s);
       sprintf(s, "sexp=%02x 1mant=%02x ", tempExponent, tempMantissa); Serial.println(s); //*/
 #endif
-    return Posit8(sign,tempExponent,tempMantissa);
+    return posit8_t(sign,tempExponent,tempMantissa);
   } // end of posit8_div function definition
 
-static Posit8 posit8_sqrt(Posit8& a) {
+static posit8_t posit8_sqrt(posit8_t& a) {
 
-  if (a.value > 0x7F) return Posit8((uint8_t)0x80); // NaR for negative and NaR
-  if (a.value == 0) return Posit8(0); // Newton-Raphson would /0
+  if (a.value > 0x7F) return posit8_t((uint8_t)0x80); // NaR for negative and NaR
+  if (a.value == 0) return posit8_t(0); // Newton-Raphson would /0
 
-  Posit8 approx = a; // Initial approximation, OK for small regimes
+  posit8_t approx = a; // Initial approximation, OK for small regimes
   if ((a.value > 0x60) || (a.value < 0x1F)) { // Regime >= 2 bits
     approx.value = (a.value<<1) & 0x7F; // Better initial approximation
     //Serial.print("Approx (");Serial.print(approx.value,BIN);
@@ -763,11 +786,11 @@ static Posit8 posit8_sqrt(Posit8& a) {
     //Serial.print("Approx (");Serial.print(approx.value,BIN);
     //Serial.print("): ");Serial.println(posit2float(approx)); //*/
   }
-  Posit8 half = Posit8(0.5); // using float constructor, varies with ES8
+  posit8_t half = posit8_t(0.5); // using float constructor, varies with ES8
   
   // Newton-raphson iterations (not converging for 100 !)
   for (int8_t iter=0; iter<9; iter++) {
-    Posit8 oldApprox=approx;
+    posit8_t oldApprox=approx;
     approx = (approx + a / approx) * half; // needs better rounding!
 #ifdef DEBUG
     Serial.print("(");Serial.print(approx.value,BIN);
@@ -779,52 +802,86 @@ static Posit8 posit8_sqrt(Posit8& a) {
   return approx;
 }
 
-static Posit8 posit8_sin(Posit8& a) {
-  //Posit8 Pi8 = 3.141602; // closest value
-  //Posit8 HalfPi8 = (uint8_t)0x44; //=1.57079633+.00000445;
-  
+#ifndef NOTRIG
+//posit8_t Pi8 = (uint8_t)0x4D; // 3.25 better than 3 since rounding goes down
+//posit8_t HalfPi8 = (uint8_t)0x45; // = 1.625 = 1.57+0.055
+
+static posit8_t posit8_sin(posit8_t& a) {
   // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
-  Posit8 aHalfSquare = a*(a/2);
-  Posit8 tempResult = (a/3)*((Posit8)3-aHalfSquare);
+  posit8_t aHalfSquare = a*(a/2);
+  posit8_t tempResult = (a/3)*((posit8_t)3-aHalfSquare);
   return tempResult;
 }
 
-static Posit8 posit8_cos(Posit8& a) {
+static posit8_t posit8_cos(posit8_t& a) {
   // first iteration : cos x = 1 - x^2/2
-  Posit8 tempResult = (Posit8)1- a*(a/2);
+  posit8_t tempResult = (posit8_t)1- a*(a/2);
   return tempResult;
 }
 
-static Posit8 posit8_next(Posit8& a) {
+static posit8_t posit8_tan(posit8_t& a) {
+  // first iteration : tan x = x + x^3/3 = x/3 * (3+x^2)
+  posit8_t aSquare = a*a;
+  posit8_t tempResult = (a/3)*((posit8_t)3+aSquare);
+  return tempResult;
+}
+#endif
+
+static posit8_t posit8_next(posit8_t& a) {
   uint8_t nextValue = a.value+1;
-  return Posit8(nextValue);
+  return posit8_t(nextValue);
 }
 
-static Posit8 posit8_prior(Posit8& a) {
+static posit8_t posit8_prior(posit8_t& a) {
   uint8_t priorValue = a.value-1;
-  return Posit8(priorValue);
+  return posit8_t(priorValue);
+}
+
+posit8_t posit8_abs(posit8_t a) {
+  return posit8_t(a.value&0x80 ? -1 : a.value ? 0 : 1);
+}
+
+posit8_t posit8_sign(posit8_t a) {
+  if (a.value == 0 || a.value == 0x80) return a;
+  return posit8_t(a.value & 0x80 ? 0xC0 : 0x40);
 }
 
   // Operator overloading for Posit8
-  Posit8 operator + (const Posit8& other) const {
+  posit8_t operator + (const posit8_t& other) const {
     return posit8_add(*this, other);
   }
-  Posit8 operator - (const Posit8& other) const {
+  posit8_t operator - (const posit8_t& other) const {
     return posit8_sub(*this, other);
   }
-  Posit8 operator * (const Posit8& other) const {
+  posit8_t operator * (const posit8_t& other) const {
     return posit8_mul(*this, other);
   }
-  Posit8 operator / (const Posit8& other) const {
+  posit8_t operator / (const posit8_t& other) const {
     return posit8_div(*this, other);
-  } //*/
-}; // end of Posit8 Class definition
+  }
+  posit8_t& operator += (const posit8_t& other) {
+  *this= posit8_add(*this, other);
+  return *this;
+  }
+  posit8_t& operator -= (const posit8_t& other) {
+    *this= posit8_sub(*this, other);
+    return *this;
+  }
+  posit8_t& operator *= (const posit8_t& other) {
+    *this= posit8_mul(*this, other);
+    return *this;
+  }
+  posit8_t& operator /= (const posit8_t& other) {
+    *this= posit8_div(*this, other);
+    return *this;
+  }
+}; // end of posit8_t Class definition
 
-Posit16::Posit16(Posit8 a) { // Definition of Posit8 casting to Posit16
+posit16_t::posit16_t(posit8_t a) { // Definition of posit8_t casting to posit16_t
   this->value = (uint16_t)(a.value<<8);
 }
 
-float posit2float(Posit16 p) {// Can't be by reference since value is modified
+float posit2float(posit16_t p) {// Can't be by reference since value is modified
   boolean sign = false;
   boolean bigNum = false; // 0/false between -1 and +1, 1/true otherwise
   int8_t exponent = 0; // correct if abs >= 1.0
@@ -864,9 +921,9 @@ float posit2float(Posit16 p) {// Can't be by reference since value is modified
   return tempValue.tempFloat;
 } // end of posit2float 16-bit
 
-float posit2float(Posit8 p) { 
+float posit2float(posit8_t p) { 
 #if ES8==ES16
-  return posit2float((Posit16)p);
+  return posit2float((posit16_t)p);
 #else  
   boolean sign = false;
   boolean bigNum = false; 
