@@ -10,17 +10,20 @@
   - Small size, both in code/program memory and RAM usage
   - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
   - Useful, explanatory comments in the library
-
+ 
   As corollary, major non-goals are :
   - Support for 32bits posits (not enough added value compared with existing floats)
   - Full compliance with the Posit-2022 standard (too many functions)
   - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
   - Support of quire (very long accumulator)
+  - Use of templates, boilerplate, etc. bloating code memory
 
-  CURRENT STATUS: provides + - * / sqrt, trig routines (with conditional compilation)
+  CURRENT STATUS
+  Provides + - * / sqrt, next prior sign abs neg, & trig routines with conditional compilation
   Changed the class names to posit8_t and posit16_t for compatibility with other implementations
   WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (posit2Float done)
   TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
+  TODO : add p10_t class for byte storage of 10bit [0..1[ numbers (probability)
   
   Copyright (c) 2024 Christophe Vermeulen
 
@@ -444,19 +447,20 @@ static posit16_t posit16_sqrt(posit16_t& a) {
 }
 
 #ifndef NOTRIG
+posit16_t Pi16 = 3.141602; // closest value
+posit16_t HalfPi16 = (uint16_t)0x4491; //=1.57079633+.00000445;
+
 static posit16_t posit16_sin(posit16_t& a) {
   /*bool aSign;
   int8_t aExponent, tempExponent;
   uint16_t aMantissa, tempMantissa;*/
   
-  posit16_t Pi16 = 3.141602; // closest value
-  posit16_t HalfPi16 = (uint16_t)0x4491; //=1.57079633+.00000445;
-  //while (a > Pi16) a -= Pi16; // < not defined yet
-  //while (a < -Pi16) a += Pi16; // < not defined yet
+  //while (a > Pi16) a -= Pi16; // < operator not defined yet
+  //while (a < -Pi16) a += Pi16;
   
   // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
   // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 
-  // TODO create /2 routine for posit16_t and posit8_t (exponent--)
+  // TODO create posit<x>_half routines for posit16_t and posit8_t /2 (exponent--)
   posit16_t aHalfSquare = a*(a/2);
   posit16_t tempResult = (a/3)*((posit16_t)3-aHalfSquare);
   return tempResult;
@@ -474,6 +478,13 @@ static posit16_t posit16_tan(posit16_t& a) {
   posit16_t tempResult = (a/3)*((posit16_t)3+aSquare);
   return tempResult;
 }
+
+static posit16_t posit16_atan(posit16_t& a) {
+  // first iteration : atan x = x - x^3/3 = x/3 * (3-x^2)
+  posit16_t aSquare = a*a;
+  posit16_t tempResult = (a/3)*((posit16_t)3-aSquare);
+  return tempResult;
+}
 #endif
 
 posit16_t posit16_next(posit16_t& a) {
@@ -486,13 +497,17 @@ posit16_t posit16_prior(posit16_t& a) {
   return posit16_t(priorValue);
 }
 
-posit16_t posit16_abs(posit16_t a) {
-  return posit16_t(a.value&0x8000 ? -1 : a.value ? 0 : 1);
-}
-
 posit16_t posit16_sign(posit16_t a) {
   if (a.value == 0 || a.value == 0x8000) return a;
   return posit16_t(a.value & 0x8000 ? 0xC000 : 0x4000);
+}
+
+posit16_t posit16_neg(posit16_t a) {
+  return posit16_t(-a.value);
+}
+
+posit16_t posit16_abs(posit16_t a) {
+  return a.value&0x8000 ? posit16_neg(a) : a;
 }
 
 class posit8_t { // Class definition
@@ -771,7 +786,6 @@ class posit8_t { // Class definition
   } // end of posit8_div function definition
 
 static posit8_t posit8_sqrt(posit8_t& a) {
-
   if (a.value > 0x7F) return posit8_t((uint8_t)0x80); // NaR for negative and NaR
   if (a.value == 0) return posit8_t(0); // Newton-Raphson would /0
 
@@ -786,7 +800,7 @@ static posit8_t posit8_sqrt(posit8_t& a) {
     //Serial.print("Approx (");Serial.print(approx.value,BIN);
     //Serial.print("): ");Serial.println(posit2float(approx)); //*/
   }
-  posit8_t half = posit8_t(0.5); // using float constructor, varies with ES8
+  posit8_t half = posit8_t(0.5); // using float constructor, value varies with ES8
   
   // Newton-raphson iterations (not converging for 100 !)
   for (int8_t iter=0; iter<9; iter++) {
@@ -798,16 +812,19 @@ static posit8_t posit8_sqrt(posit8_t& a) {
 #endif
     if (approx.value == oldApprox.value) break; 
   }
+#ifdef DEBUG
   Serial.println();
+#endif
   return approx;
 }
 
 #ifndef NOTRIG
-//posit8_t Pi8 = (uint8_t)0x4D; // 3.25 better than 3 since rounding goes down
-//posit8_t HalfPi8 = (uint8_t)0x45; // = 1.625 = 1.57+0.055
+// Formulas from https://en.wikipedia.org/wiki/Taylor_series#Trigonometric_functions
+//static const posit8_t Pi8 = posit8_t((uint8_t)0x4D); // 3.25 better than 3 since rounding goes down
+//static const posit8_t HalfPi8 = posit8_t((uint8_t)0x45)); // = 1.625 = 1.57+0.055
 
 static posit8_t posit8_sin(posit8_t& a) {
-  // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
+  // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2) // TODO check smaller error
   posit8_t aHalfSquare = a*(a/2);
   posit8_t tempResult = (a/3)*((posit8_t)3-aHalfSquare);
   return tempResult;
@@ -825,7 +842,14 @@ static posit8_t posit8_tan(posit8_t& a) {
   posit8_t tempResult = (a/3)*((posit8_t)3+aSquare);
   return tempResult;
 }
-#endif
+
+static posit8_t posit8_atan(posit8_t& a) {
+  // first iteration : atan x = x - x^3/3 = x/3 * (3-x^2)
+  posit8_t aSquare = a*a;
+  posit8_t tempResult = (a/3)*((posit8_t)3-aSquare);
+  return tempResult;
+}
+#endif // NOTRIG
 
 static posit8_t posit8_next(posit8_t& a) {
   uint8_t nextValue = a.value+1;
@@ -837,13 +861,20 @@ static posit8_t posit8_prior(posit8_t& a) {
   return posit8_t(priorValue);
 }
 
-posit8_t posit8_abs(posit8_t a) {
-  return posit8_t(a.value&0x80 ? -1 : a.value ? 0 : 1);
+static posit8_t posit8_abs(posit8_t& a) {
+  if (a.value == 0 || a.value == 0x80) return a;
+  uint8_t absValue = a.value&0x80 ? -a.value : a.value;
+  return posit8_t(absValue);
 }
 
-posit8_t posit8_sign(posit8_t a) {
+static posit8_t posit8_neg(posit8_t& a) {
+  return posit8_t((uint8_t)-a.value);
+}
+
+static posit8_t posit8_sign(posit8_t a) {
   if (a.value == 0 || a.value == 0x80) return a;
-  return posit8_t(a.value & 0x80 ? 0xC0 : 0x40);
+  uint8_t signValue=a.value & 0x80 ? 0xC0 : 0x40;
+  return posit8_t(signValue);
 }
 
   // Operator overloading for Posit8
