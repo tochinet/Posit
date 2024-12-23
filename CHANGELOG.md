@@ -8,6 +8,10 @@
 * Avoid float casting for construction from integer
 * Create custom byte storage format for 0..1 interval (probabilities) using Posit10,0
 
+## Posit 0.1.2 - 2024.12.13 
+* Additional functions (sin, cos, tan, atan, sign, abs, negate)
+* Use of Posit16 routine for Posit8_2float
+
 ## Posit 0.1.1 - 2024.12.07 
 
 * Posit16 <-> Posit8 translations
