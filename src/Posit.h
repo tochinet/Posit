@@ -1,31 +1,8 @@
 /*************************************************************************************
 
-  Posit Library for Arduino v0.2.0rc1
-  
-  This library provides posit8 and posit16 floating point arithmetic support
-  for the Arduino environment, especially the memory-limited 8-bit AVR boards.
-  Posits are a more efficient and more precise alternative to IEEE754 floats.
+  Posit Library for Arduino v0.1.3 (not yet released)
 
-  Major design goals are :
-  - Small size, both in code/program memory and RAM usage
-  - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
-  - Useful, explanatory comments in the library
- 
-  As corollary, major non-goals are :
-  - Support for 32bits posits (not enough added value compared with existing floats)
-  - Full compliance with the Posit-2022 standard (too many functions)
-  - Complex rounding algorithms (rounding to nearest even requires handling G,R and S bits)
-  - Support of quire (very long accumulator)
-  - Use of templates, boilerplate, etc. bloating code memory
-
-  CURRENT STATUS
-  Provides + - * / sqrt, next prior sign abs neg, & trig routines with conditional compilation
-  Changed the class names to posit8_t and posit16_t for compatibility with other implementations
-  WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (posit2Float done)
-  TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
-  TODO : add p10_t class for byte storage of 10bit [0..1[ numbers (probability)
-  
-  Copyright (c) 2024 Christophe Vermeulen
+    Copyright (c) 2024 Christophe Vermeulen
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +21,33 @@
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
+
+  This library provides posit8 and posit16 floating point arithmetic support
+  for the Arduino environment, especially the memory-limited 8-bit AVR boards.
+  Posits are a more efficient and more precise alternative to IEEE754 floats.
+
+  Major design goals are :
+  - Small size, both in code/program memory and RAM usage
+  - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
+  - Useful, explanatory comments in the library
+ 
+  As corollary, major non-goals are :
+  - Support for 32bits posits (not enough added value compared with existing floats)
+  - Full compliance with the Posit-2022 standard (too many functions)
+  - Complex rounding algorithms (rounding to nearest even requires handling G, R and S bits)
+  - Support of quire (very long accumulator)
+  - Use of templates, boilerplate, etc. bloating code memory
+
+  CURRENT STATUS
+  Provides + - * / sqrt next prior sign abs neg
+  Provides trigonometric routines sin cos tan atan with conditional compilation
+  Changed the class names to posit8_t and posit16_t for compatibility with other implementations
+  WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (done for posit2float)
+  TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
+  TODO : improve precision of trigonometric routines (now only precise around zero)
+  DROPPPED : add p10_t class for byte storage of 10bit [0..1[ numbers (probability)
+     - this is nonstandard and ... maybe not very useful since posits with ES=0 is linear between -1 and 1
+  
 
   See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
@@ -65,7 +69,7 @@
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-struct splitPosit { // Not in use. TODO check if it reduces or increases memory usage
+struct splitPosit { // Not yet in use. TODO check if it reduces or increases memory usage
   boolean sign;
   int8_t exponent; // 2's power, combining regime and exponent fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
