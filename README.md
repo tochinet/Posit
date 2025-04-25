@@ -20,12 +20,12 @@ Maybe a better way to round operations will sneak in if it doesn't break the sim
 
 ## Some explanations on Floats and Posits.
 
-Any number representation system using N bits can express at most exactly 2^n numbers : one byte (8 bits) can express 256 numbers, 16-bits 65536 numbers, etc. All other numbers have to be "rounded" to a value in the set. Note that in some cases, the resulting value may not be the closest one : standard byte math will make 255+1 = 0 (silent overflow).
+Any number representation system using N bits can express at most exactly 2^n numbers : one byte (8 bits) can express 256 numbers, 16-bits 65536 numbers, etc. All other numbers have to be "rounded" to a value in the set. Note that in some cases, the resulting value of operations may not be the closest one : standard byte math will make 255+1 = 0 (silent overflow).
 
 ### IEEE 754 float representation and Arduino implementation
 IEEE 754 numbers split the number of available bits in three separate parts : the sign (one bit), the exponent (power of two) and the mantissa (fractional part). Since all fields have a fixed size, the precision is said to be constant : in the 32-bit variant, there are [always](https://arxiv.org/pdf/1811.01721) 2^23 values expressed exactly between any successive powers of two, such as between 1 and 2, or between -1/64 and -1/32.
 
-The standard Arduino math library supports [several functions](https://www.tutorialspoint.com/arduino/arduino_math_library.htm), but only one type of floating point numbers : 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). That format consists of a one-bit sign (like signed integers), a 8-bits exponent (power of two, biased by adding 127), and a 24-bits mantissa (with the starting "1" bit uncoded). There is no inversion of bits (2's complement) for negative numbers like for signed integers.
+The standard Arduino math library supports [several functions](https://www.tutorialspoint.com/arduino/arduino_math_library.htm), but only one type of floating point numbers : 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). That format consists of a one-bit sign (like signed integers), a 8-bits exponent (power of two, biased by adding 127), and a 24-bits mantissa (with the starting "1" bit uncoded), without the usual bit inversion for negative numbers (2's complement) found in signed integer formats.
 
 Expressing -10.5 in float requires the following steps :
 1. coding the absolute value in binary (1010.1)
