@@ -2,7 +2,7 @@
 
   Posit Library for Arduino v0.1.3 (not yet released)
 
-    Copyright (c) 2024 Christophe Vermeulen
+    Copyright (c) 2024-2025 Christophe Vermeulen
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -69,9 +69,9 @@
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
-struct splitPosit { // Not yet in use. TODO check if it reduces or increases memory usage
+struct splitPosit { // struct not used yet. TODO check if it reduces or increases memory usage
   boolean sign;
-  int8_t exponent; // 2's power, combining regime and exponent fields
+  int8_t powerof2; // 2's power, combining regime and exponent fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 }; 
 
@@ -84,33 +84,33 @@ class posit16_t {
   public: 
   uint16_t value;
 
-  posit16_t(uint16_t v = 0): value(v) {} // default constructor, raw from unsigned
+  posit16_t(uint16_t v = 0): value(v) {} // default constructor, raw from unsigned 16-bit value
 
-  // construct from parts (sign, exponent and mantissa without leading 1)
-  posit16_t(bool& sign, int8_t tempExponent, uint16_t& tempMantissa) {
-    // tempExponent by value, will be modified
-    // sign and mantissa by reference to avoid copy, won't be modified.
+  // construct from parts (sign, 2's power and mantissa without leading 1)
+  posit16_t(bool& sign, int8_t powerof2, uint16_t& tempMantissa) {
+    // powerof2 passed by value, as it will be modified
+    // sign and mantissa passed by reference to avoid copy, they won't be modified.
     // REJECTED using mantissa with leading one. But mantissa might be moved down someday
 
 #ifdef DEBUG
     //Serial.print(sign?" -1.":" +1.");
     //Serial.print(tempMantissa,HEX); // bug : missing leading zeros
-    //Serial.print("x2^");Serial.println(tempExponent); Serial.print(' ');
+    //Serial.print("x2^");Serial.println(powerof2); Serial.print(' ');
 #endif
 
     int8_t bitCount = 14; // first bit of regime
-    uint16_t tempResult = 0; // better than this->value ? TODO evaluate !
+    uint16_t tempResult = 0; // better than using this->value ? TODO evaluate !
 
     // Extract exponent lsb(s) for exponent field
-    uint8_t esBits = tempExponent & ((1 << ES16) - 1);
-    tempExponent >>= ES16;
-    if (tempExponent >= 0) { // positive exponent, regime bits are 1
-      while (tempExponent-->= 0 && bitCount >= 0) {
+    uint8_t esBits = powerof2 & ((1 << ES16) - 1);
+    powerof2 >>= ES16;
+    if (powerof2 >= 0) { // positive exponent, regime bits are 1
+      while (powerof2-->= 0 && bitCount >= 0) {
         tempResult |= (1 << bitCount--);
       }
       bitCount--; // terminating zero
     } else { // abs(v) < 1
-      while (tempExponent++ < 0 && bitCount--> 0); // do nothing
+      while (powerof2++ < 0 && bitCount--> 0); // do nothing
       tempResult |= (1 << bitCount--); // terminating 1
     }
     if (bitCount >= 0 && ES16 == 2) { // still space for exp field
@@ -164,7 +164,7 @@ class posit16_t {
     this->value = posit16_t((float)v).value;
   }
 
-  posit16_t(int v = 0) { // Construct from int by casting to float for simplicity
+  posit16_t(int v = 0) { // Construct from int by casting to float to KISShort
     this->value = posit16_t((float)v).value;
     /* TODO : construct from int algorithm : first get log2(N), then extract mantissa
     // algorithm copied from https://graphics.stanford.edu/~seander/bithacks.html
@@ -186,6 +186,7 @@ class posit16_t {
   // End of constructors
 
   static void positSplit(posit16_t p, bool& sign, int8_t& exponent, uint16_t& mantissa) {
+    // TODO use powerof2 and maybe splitPosit struct
     // Reads posit16_t by value, writes sign, exponent and mantissa (with leading 1)
     bool bigNum; // true for abs(p) >= 1
     int8_t bitCount= 5+8; // posit bit counter for regime, exp and mantissa
@@ -221,7 +222,7 @@ class posit16_t {
     mantissa |= 0x8000; // add implied one;
   } // end of positSplit for posit16_t
 
-  // Add methods for posit16 4 operations (+ - * /)
+  // Posit16 methods for posit16 4 operations (+ - * /)
   static posit16_t posit16_add(posit16_t a, posit16_t b) {
     bool aSign, bSign, sign=0;
     int8_t aExponent, bExponent, tempExponent;
@@ -241,7 +242,7 @@ class posit16_t {
     if (aExponent > bExponent) bMantissa >>= (aExponent - bExponent);
     if (aExponent < bExponent) aMantissa >>= (bExponent - aExponent);
     tempExponent = max(aExponent, bExponent);
-    // TODO consider alternative to avoid 32 bit arithmetic if possible
+    // TODO consider alternatives to avoid 32 bit arithmetic on AVR if possible
     long longMantissa = (long) aMantissa + bMantissa; // Sign not treated here
     if (aSign) {
       longMantissa -= aMantissa;
@@ -428,7 +429,7 @@ static posit16_t posit16_sqrt(posit16_t& a) {
   if (aExponent &1) {
     tempMantissa += 0x4000; // uneven powers of 2 need carried down exponent lsb
     aMantissa += 0x4000; // both at the same bit place !
-    aMantissa <<=1; // this can cause overflow, but unsigned substraction corrects it
+    aMantissa <<=1; // this can cause overflow, but unsigned substraction will correct it
   }   
 #ifdef DEBUG
   //Serial.print("aMant(");Serial.print(aMantissa,HEX);Serial.print(") ");
@@ -459,11 +460,11 @@ static posit16_t posit16_sin(posit16_t& a) {
   int8_t aExponent, tempExponent;
   uint16_t aMantissa, tempMantissa;*/
   
-  //while (a > Pi16) a -= Pi16; // < operator not defined yet
-  //while (a < -Pi16) a += Pi16;
+  while (a.value > Pi16.value) a -= Pi16; // < > == operators not yet in library
+  while (a.value < -Pi16.value) a += Pi16;
   
-  // first iteration : sin x = x - x^3/6 = x/3 * (3-x^2/2)
-  // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 
+  // First implementation using Taylor : sin x = x - x^3/6 = x/3 * (3-x^2/2) // more precise?
+  // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 is some range ?
   // TODO create posit<x>_half routines for posit16_t and posit8_t /2 (exponent--)
   posit16_t aHalfSquare = a*(a/2);
   posit16_t tempResult = (a/3)*((posit16_t)3-aHalfSquare);
@@ -471,13 +472,13 @@ static posit16_t posit16_sin(posit16_t& a) {
 }
 
 static posit16_t posit16_cos(posit16_t& a) {
-  // first iteration : cos x = 1 - x^2/2
+  // First implementation using Taylor : cos x = 1 - x^2/2
   posit16_t tempResult = (posit16_t)1- a*(a/2);
   return tempResult;
 }
 
 static posit16_t posit16_tan(posit16_t& a) {
-  // first iteration : tan x = x + x^3/3 = x/3 * (3+x^2)
+  // first iteration : tan x = x + x^3/3 = x/3 * (3+x^2) // more precise?
   posit16_t aSquare = a*a;
   posit16_t tempResult = (a/3)*((posit16_t)3+aSquare);
   return tempResult;
@@ -958,7 +959,7 @@ float posit2float(posit16_t p) {// Can't be by reference since value is modified
 
 float posit2float(posit8_t p) { 
 #if ES8==ES16
-  return posit2float((posit16_t)p);
+  return posit2float((posit16_t)p); // simply casting by adding zeros
 #else  
   boolean sign = false;
   boolean bigNum = false; 
