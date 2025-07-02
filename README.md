@@ -10,20 +10,27 @@ No code was copied from any existing work, but some early inspiration came from 
 The [WokWi](https://wokwi.com/projects/407404859992419329) simulator was extensively used for the development of this library, as it reacts much faster to code changes than the Arduino software.
 
 ### Status 
-This library is a work in progress, and my first experience in creating an Arduino library _and_ publishing on GitHub, so expect errors and mistakes, stupid or not, and don't hesitate to contribute and propose correction and ameliorations. I tried to follow the [official guide](https://docs.arduino.cc/learn/contributions/). 
-As with all WIP, expect many, frequent and breaking changes. Remember this is also a way for me to learn.
 
-Today, the library allows to create posit8 (with either 0, 1 or 2-bits exponent field) and posit16,2 objects from raw unsigned byte/uint, from int (16 bits), float32 and double (also 32 bits on Arduino platform), to convert a posit back to float, to add, subtract, multiply and divide two posits, and to calculate the most common trigonometric functions (sin, cos, tan etc.), prior/next values, and square root of posits. 
+Today, the library supports the following features :
+- Creation of Posit8 (with either 0, 1, or 2-bit exponent field) and Posit<16,2> objects
+  - from raw value (unsigned char/byte/uint8_t or uint16_t)
+  - from signed integer (16 bits)
+  - from float32 and double (also 32 bits on Arduino platform)
+- Convert from Posit to float32
+- Addition, subtraction, multiplication and division of two posits of the same type, with overloading of operators
+- Prior and next values of Posit
+- Square root of Posit
+- Most common trigonometric functions (sin, cos, tan etc.) with conditional compilation 
 
-Planned in coming iterations : comparisons with overloading of operators, refactoring to reduce ROM size, ...
-Maybe a better way to round operations will sneak in if it doesn't break the simplicity rule.
+Planned in coming iterations: comparisons with overloading of operators, refactoring to reduce ROM size, ...
+A better way to round operations will sneak in if it doesn't break the simplicity rule.
 
 ## Some explanations on Floats and Posits.
 
-Any number representation system using N bits can express at most exactly 2^n numbers : one byte (8 bits) can express 256 numbers, 16-bits 65536 numbers, etc. All other numbers have to be "rounded" to a value in the set. Note that in some cases, the resulting value of operations may not be the closest one : standard byte math will make 255+1 = 0 (silent overflow).
+Any number representation system using N bits can express at most exactly 2^n numbers: one byte (8 bits) can express 256 numbers, 16-bit values can express 65536 numbers, etc. All other numbers have to be "rounded" to a value in the set. Note that in some cases, the resulting value of operations may not be the closest one: standard byte math will make 255+1 = 0 (silent overflow).
 
 ### IEEE 754 float representation and Arduino implementation
-IEEE 754 numbers split the number of available bits in three separate parts : the sign (one bit), the exponent (power of two) and the mantissa (fractional part). Since all fields have a fixed size, the precision is said to be constant : in the 32-bit variant, there are [always](https://arxiv.org/pdf/1811.01721) 2^23 values expressed exactly between any successive powers of two, such as between 1 and 2, or between -1/64 and -1/32.
+IEEE 754 numbers split the number of available bits into three separate parts: the sign (one bit), the exponent (power of two), and the mantissa (fractional part). Since all fields have a fixed size, the precision is said to be constant : in the 32-bit variant, there are [always](https://arxiv.org/pdf/1811.01721) 2^23 values expressed exactly between any successive powers of two, such as between 1 and 2, or between -1/64 and -1/32.
 
 The standard Arduino math library supports [several functions](https://www.tutorialspoint.com/arduino/arduino_math_library.htm), but only one type of floating point numbers : 32-bit IEEE 754. This is the most common standard for floating point calculations, described in many projects such as [Mimosa](https://www.mimosa.org/ieee-floating-point-format/). That format consists of a one-bit sign (like signed integers), a 8-bits exponent (power of two, biased by adding 127), and a 24-bits mantissa (with the starting "1" bit uncoded), without the usual bit inversion for negative numbers (2's complement) found in signed integer formats.
 
