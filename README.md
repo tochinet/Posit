@@ -3,7 +3,7 @@
 This is a C/C++ library for posit8 and posit16 tapered/floating point arithmetic support in Arduino.
 
 [Posit Arithmetic](https://posithub.org/docs/Posits4.pdf) was invented by John Gustafson. It is an alternative format to IEEE 754 that promises a more efficient and balanced precision, especially useful for AI.
-Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are considered in this library, and only the ATmega368 architecture is targeted (UNO etc.), since 32-bit architectures (ESP32, RP2040 etc.) often have hardware acceleration for IEEE 754 floats.
+Posits can be any size from 2 to 32 bits or even more. Only 8-bit and 16-bit are considered in this library, and only the ATmega368 architecture is targeted at the moment (UNO etc.), since 32-bit architectures (ESP32, RP2040 etc.) often have hardware acceleration for IEEE 754 floats. ESP32-C3 and SAMD21 (Arduino M0 etc.) will be targeted in the future as they do not have floating point hardware support.
 
 No code was copied from any existing work, but some early inspiration came from the [SoftPosit C reference library](https://gitlab.com/cerlane/SoftPosit), from section IV of the https://arxiv.org/pdf/2308.03425 paper (on division algorithms and rounding, leading to the conclusion that *rounding to nearest even* is not likely worth pursuing on Arduino), and from many other pages on the Internet (Quora, Stack Overflow, etc.). After releasing version 0.1.1, I found [F. Rossi et al.](https://arxiv.org/pdf/2308.03425) article on adding posit arithmetic to a Risc V architecture. Its approach is similar to mine in several aspects, and I may adapt some of my code in that direction (for example division).
 
