@@ -1,8 +1,8 @@
 /*************************************************************************************
 
-  Posit Library for Arduino v0.1.3 (not yet released)
+Posit Library for Arduino v0.1.3 (not yet released)
 
-    Copyright (c) 2024-2025 Christophe Vermeulen
+  Copyright (c) 2024-2025 Christophe Vermeulen
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -47,9 +47,9 @@
   TODO : improve precision of trigonometric routines (now only precise around zero)
   DROPPPED : add p10_t class for byte storage of 10bit [0..1[ numbers (probability)
      - this is nonstandard and ... maybe not very useful since posits with ES=0 is linear between -1 and 1
-  
+  TODO Evaluate interest of posit8_t, posit16_t but also qposit8_t (quadruplet) for 32-bit architectures
 
-  See https://github.com/tochinet/Posit/ for more details on Posits and the library.
+See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
 
 #ifndef EPSILON     // Define EPSILON in sketch for rounding down ...
@@ -104,14 +104,14 @@ class posit16_t {
     // Extract exponent lsb(s) for exponent field
     uint8_t esBits = powerof2 & ((1 << ES16) - 1);
     powerof2 >>= ES16;
-    if (powerof2 >= 0) { // positive exponent, regime bits are 1
+    if (powerof2 >= 0) { // positive 2's power, regime bits are 1
       while (powerof2-->= 0 && bitCount >= 0) {
         tempResult |= (1 << bitCount--);
       }
-      bitCount--; // terminating zero
-    } else { // abs(v) < 1
+      bitCount--; // skip terminating zero
+    } else { // abs(v) < 1, regime bits are zero
       while (powerof2++ < 0 && bitCount--> 0); // do nothing
-      tempResult |= (1 << bitCount--); // terminating 1
+      tempResult |= (1 << bitCount--); // set terminating 1
     }
     if (bitCount >= 0 && ES16 == 2) { // still space for exp field
       if (esBits & 2) tempResult |= (1 << bitCount);
@@ -128,7 +128,7 @@ class posit16_t {
         tempResult |= (1 << (bitCount + 1));
       //}
     }
-    this->value=sign?~tempResult+1:tempResult;
+    this->value=sign?~tempResult+1:tempResult; // 2's complement for negative numbers
   } // end of posit16 constructor from parts
 
   posit16_t(float v = 0) { // Construct from float32, IEEE754 format
@@ -1001,3 +1001,4 @@ float posit2float(posit8_t p) {
   return tempValue.tempFloat;
 #endif
 } // end of posit2float 8-bit
+
