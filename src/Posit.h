@@ -2,26 +2,6 @@
 
 Posit Library for Arduino v0.1.3 (not yet released)
 
-  Copyright (c) 2024-2025 Christophe Vermeulen
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-
   This library provides posit8 and posit16 floating point arithmetic support
   for the Arduino environment, especially the memory-limited 8-bit AVR boards.
   Posits are a more efficient and more precise alternative to IEEE754 floats.
@@ -49,6 +29,26 @@ Posit Library for Arduino v0.1.3 (not yet released)
      - this is nonstandard and ... maybe not very useful since posits with ES=0 is linear between -1 and 1
   TODO Evaluate interest of posit8_t, posit16_t but also qposit8_t (quadruplet) for 32-bit architectures
 
+  Copyright (c) 2024-2025 Christophe Vermeulen
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
 See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
 
@@ -63,14 +63,14 @@ See https://github.com/tochinet/Posit/ for more details on Posits and the librar
 #endif
 #define ES16 2 // Posit 16 always have two-bits exponent field
 //#define ES32 2 // No support envisioned for Posit32.
-//#define NOTRIG // uncomment/put in sketch to exclude trig routines
+//#define NOTRIG // uncomment or put in sketch to exclude trig routines
 
 #ifdef DEBUG
 char s[30]; // temporary C string for Serial debug using sprintf
 #endif
 
 struct splitPosit { // struct not used yet. TODO check if it reduces or increases memory usage
-  boolean sign;
+  bool sign;
   int8_t powerof2; // 2's power, combining regime and exponent fields
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 }; 
@@ -168,7 +168,7 @@ class posit16_t {
     this->value = posit16_t((float)v).value;
     /* TODO : construct from int algorithm : first get log2(N), then extract mantissa
     // algorithm copied from https://graphics.stanford.edu/~seander/bithacks.html
-    uint32_t v;         // 32-bit value to find the log2 of 
+    uint32_t v;         // 32-bit value to find the log2 of the argument
     uint8_t exponent=0; // result of log2(v) will go here
     uint8_t shift; // each bit of the log2
     uint16_t mantissa=v; // Copy of the argument needed to fill mantissa!
@@ -185,35 +185,35 @@ class posit16_t {
   posit16_t(posit8_t) ; // forward declaration
   // End of constructors
 
-  static void positSplit(posit16_t p, bool& sign, int8_t& exponent, uint16_t& mantissa) {
-    // TODO use powerof2 and maybe splitPosit struct
-    // Reads posit16_t by value, writes sign, exponent and mantissa (with leading 1)
+  static void positSplit(posit16_t p, bool& sign, int8_t& powerof2, uint16_t& mantissa) {
+    // TODO maybe use splitPosit struct ?
+    // Reads posit16_t by value, writes sign, powerof2 and mantissa (with leading 1)
     bool bigNum; // true for abs(p) >= 1
-    int8_t bitCount= 5+8; // posit bit counter for regime, exp and mantissa
+    int8_t bitCount= 5+8; // posit bit counter for regime, exponent and mantissa
 
     sign = (p.value & 0x8000);
     if (sign) p.value = -p.value; // intrinsic cast to signed and back
-    exponent = -(1 << ES16); // negative exponents start at -1/-2/-4;
-    // Note: don't confuse this "exponent" (power of 2) with the exponent field (2 lsbs outside regime)
+    powerof2 = -(1 << ES16); // negative exponents start at -1/-2/-4;
+    // Note: We use "power of 2" to avoid confusion with the exponent field (2 lsbs outside regime)
     bigNum = (p.value >= 0x4000 && p.value < 0xC000);
-    if (bigNum) exponent = 0; // positive exponents start at 0
+    if (bigNum) powerof2 = 0; // positive exponents start at 0
 
-    //first extract exponent from regime bits
+    //first extract power of 2 from regime bits
     while ((p.value & (1 << bitCount)) == ((bigNum) << bitCount--)) { // still regime
-      if (bigNum) exponent += 1 << ES16;
-      else exponent -= 1 << ES16; // add/sub 2^es for each bit in regime
+      if (bigNum) powerof2 += 1 << ES16;
+      else powerof2 -= 1 << ES16; // add/sub 2^es for each bit in regime
       if (bitCount == -1) break; // all regime, no space for exponent or mantissa
     }
     // add exponent field bits if any
     if (ES16 && (bitCount > -1)) {
       if (p.value & (1 << bitCount)) {
-        exponent += ES16; // add one or two to exponent
+        powerof2 += ES16; // add one or two to exponent
       }
       bitCount--;
     }
     if ((ES16 > 1) && (bitCount > -1)) {
       if (p.value & (1 << bitCount)) {
-        exponent += 1; // add one if exp ==0Bx1
+        powerof2 += 1; // add one if exp ==0Bx1
       }
       bitCount--;
     }
@@ -320,12 +320,12 @@ class posit16_t {
       longMantissa <<= 1; // eliminate msb uncoded
       Serial.println("ERROR posit16_mul : MSB is zero");
     }
-    tempMantissa = longMantissa ; 
+    tempMantissa = longMantissa ; // casting back to 16 bits
     return posit16_t(sign, tempExponent, tempMantissa);
   } // end of posit16_mul function definition
 
   static posit16_t posit16_div(posit16_t a, posit16_t b) {
-    boolean aSign, bSign, sign;
+    bool aSign, bSign, sign;
     int8_t aExponent, bExponent;
     uint16_t aMantissa, bMantissa;
     uint8_t esBits;
@@ -341,7 +341,7 @@ class posit16_t {
     sign = (aSign ^ bSign) ;
     int tempExponent = (aExponent - bExponent);
     // first solution to divide mantissas : use float (not efficient)
-    // TODO consider using fracdiv routine, like sqrt
+    // TODO consider using fracdiv routine, like sqrt, or inverse and multiply
     union float_int { // for bit manipulation
       float tempFloat; // little endian in AVR8
       uint32_t tempInt; // little-endian as well
@@ -460,8 +460,8 @@ static posit16_t posit16_sin(posit16_t& a) {
   int8_t aExponent, tempExponent;
   uint16_t aMantissa, tempMantissa;*/
   
-  while (a.value > Pi16.value) a -= Pi16; // < > == operators not yet in library
-  while (a.value < -Pi16.value) a += Pi16;
+  //while (a.value > Pi16.value) a -= Pi16; // < > == operators not yet in library
+  //while (a.value < -Pi16.value) a += Pi16; // BUG, posit.values are unsigned !
   
   // First implementation using Taylor : sin x = x - x^3/6 = x/3 * (3-x^2/2) // more precise?
   // TODO second iteration : average with cos (PI/2-x) =  1 - x^2/2 is some range ?
@@ -517,7 +517,7 @@ posit16_t posit16_abs(posit16_t a) {
 
 class posit8_t { // Class definition
   private:
-  //uint8_t value; // maybe in future
+  //uint8_t value; // maybe private in future
 
   public: 
   uint8_t value; // tried int8_t as sign is msb, but nar to nan conversion bugged
@@ -918,8 +918,8 @@ posit16_t::posit16_t(posit8_t a) { // Definition of posit8_t casting to posit16_
 }
 
 float posit2float(posit16_t p) {// Can't be by reference since value is modified
-  boolean sign = false;
-  boolean bigNum = false; // 0/false between -1 and +1, 1/true otherwise
+  bool sign = false;
+  bool bigNum = false; // 0/false between -1 and +1, 1/true otherwise
   int8_t exponent = 0; // correct if abs >= 1.0
   int8_t bitCount = 13; // posit bit counter 
   union float_int { // for bit manipulation
@@ -931,7 +931,7 @@ float posit2float(posit16_t p) {// Can't be by reference since value is modified
   if (p.value == 0) return 0.0f;
   if (p.value == 0x8000) return NAN;
   if (p.value & 0x8000) {
-    p.value=-p.value;
+    p.value=-p.value; // because floats are not using 2's complement
     sign = true; // negative
   }
   if (p.value & 0x4000) {
@@ -939,9 +939,9 @@ float posit2float(posit16_t p) {// Can't be by reference since value is modified
   } else {
     exponent = -(1 << ES16); // negative exponents start at -1/-2/-4
   }
-  while ((p.value & (1 << bitCount)) == (bigNum << bitCount--)) { // regime bits
+  while ((p.value & (1 << bitCount)) == (bigNum << bitCount--)) { // more regime bits ? (starting at bit 13)
     bigNum ? exponent += (1 << ES16) : exponent -= (1 << ES16); // add 1, 2 or 4 for each regime bit
-    if (bitCount == -1) break; // no exponent or mantissa at all in posit
+    if (bitCount == -1) break; // no exponent field or mantissa at all in posit
   }
   //handle exponent bits if any
   uint8_t esBits = ((p.value & ((1 << (bitCount + 1)) - 1)) >> (bitCount + 1 - ES16)) & ((1 << ES16) - 1);
@@ -961,8 +961,8 @@ float posit2float(posit8_t p) {
 #if ES8==ES16
   return posit2float((posit16_t)p); // simply casting by adding zeros
 #else  
-  boolean sign = false;
-  boolean bigNum = false; 
+  bool sign = false;
+  bool bigNum = false; 
   int8_t exponent = 0; // correct if abs >= 1.0
   int8_t bitCount = 5; // posit bit counter
   union float_int { // for bit manipulation
@@ -1001,4 +1001,5 @@ float posit2float(posit8_t p) {
   return tempValue.tempFloat;
 #endif
 } // end of posit2float 8-bit
+
 
