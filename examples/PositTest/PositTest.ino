@@ -7,7 +7,7 @@
  * - Input of two posits from Serial and test of four basic operations (with overloading),
  *   sqrt, sin ,cos, tan, next, prior
  *
- * The test scenarios are available below for both Posit8 and Posit16,2
+ * The test scenarios are available below for both Posit8 and Posit<16,2>
  */
 
 //#define DEBUG // uncomment to enable debug Serial.print from library
@@ -66,12 +66,13 @@ void setup() {
   } 
   Serial.println(); //*/
 
-  /*/Serial.println("Table of 16 random Posit 8 results"); 
+  //
+  Serial.println("Table of 16 random Posit 8 results"); 
   randomSeeder();
   Serial.println("    A   :    B   :   abin   :   bbin   :   sum    :   sub   :   mul   :   div");
   Serial.println("--------+--------+----------+----------+----------+---------+---------+---------");
   for (int j=0; j<16; j++) {
-      posit8_t firstPosit=posit8_t(numbersList[random(16)]); 
+      posit8_t firstPosit=posit8_t(1);//numbersList[random(16)]); 
       posit8_t secondPosit=posit8_t(numbersList[random(16)]); 
       //posit8_t sum = posit8_t::posit8_add(firstPosit, secondPosit);
       //posit8_t sub = posit8_t::posit8_sub(firstPosit, secondPosit);  
@@ -79,14 +80,14 @@ void setup() {
       //posit8_t div = posit8_t::posit8_div(firstPosit, secondPosit); 
       posit8_t sum = firstPosit + secondPosit;
       posit8_t sub = firstPosit - secondPosit;
-      posit8_t mul = firstPosit * secondPosit;
+      posit8_t mul = posit8_t((uint8_t)((uint8_t)128-secondPosit.value));//firstPosit * secondPosit;
       posit8_t div = firstPosit / secondPosit;
 
       Serial.print(posit2float(firstPosit),4); // No way to align numbers in table
       Serial.print(" + ");
       Serial.print(posit2float(secondPosit),4);
       Serial.print(" + ");
-      Serial.print(firstPosit.value,BIN);
+      Serial.print(posit8_t((uint8_t)128).value,BIN);
       Serial.print(" + ");
       Serial.print(secondPosit.value,BIN);
       Serial.print(" + ");
@@ -99,7 +100,8 @@ void setup() {
       Serial.println(posit2float(div),4);
     } //*/
 
-  /*/Serial.println("Table of 16 random Posit16 results"); 
+  /*/
+  Serial.println("Table of 16 random Posit16 results"); 
   randomSeeder();
   Serial.println("   A   :   B   :   abin  :   bbin  :   sum   :   sub   :   mul   :   div");
   Serial.println("-------+-------+---------+---------+---------+---------+---------+---------");
@@ -375,13 +377,25 @@ void loop() {
   Serial.println(posit2float(op16),15);
   
   op16 = posit16_next(firstP16);
-  Serial.print("Next(");
+  Serial.print("Next1(");
   Serial.print(op16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op16),15); 
   
+  op16 = posit16_next(secondP16);
+  Serial.print("Next2(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+  
   op16 = posit16_prior(firstP16);
-  Serial.print("Prior(");
+  Serial.print("Prior1(");
+  Serial.print(op16.value, BIN);
+  Serial.print(") ");
+  Serial.println(posit2float(op16),15);
+  
+  op16 = posit16_prior(secondP16);
+  Serial.print("Prior2(");
   Serial.print(op16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op16),15);
