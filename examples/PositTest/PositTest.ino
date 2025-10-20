@@ -158,118 +158,118 @@ void loop() {
   
   posit8_t op8 = posit8_t::posit8_add(firstPosit, secondPosit);
   //posit8_t op8 = firstPosit + secondPosit;
-  Serial.print("Sum (");
+  Serial.print("Sum(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   //op8 = posit8_t::posit8_sub(firstPosit, secondPosit);  
   op8 = firstPosit - secondPosit;
-  Serial.print("Sub (");
+  Serial.print("Sub(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),5); 	
   
   //op8 = posit8_t::posit8_mul(firstPosit, secondPosit);  
   op8 = firstPosit * secondPosit;
-  Serial.print("Mul (");
+  Serial.print("Mul(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); 	
   
   //op8 = posit8_t::posit8_div(firstPosit, secondPosit);  
   op8 = firstPosit / secondPosit;
-  Serial.print("Div (");
+  Serial.print("Div(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_sqrt(firstPosit);
-  Serial.print("Sqrt1 (");
+  Serial.print("Sqrt1(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_sqrt(secondPosit);
-  Serial.print("Sqrt2 (");
+  Serial.print("Sqrt2(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_sin(firstPosit);
-  Serial.print("Sin1 (");
+  Serial.print("Sin1(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_sin(secondPosit);
-  Serial.print("Sin2 (");
+  Serial.print("Sin2(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_cos(firstPosit);
-  Serial.print("Cos1 (");
+  Serial.print("Cos1(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_cos(secondPosit);
-  Serial.print("Cos2 (");
+  Serial.print("Cos2(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_tan(firstPosit);
-  Serial.print("Tan1 (");
+  Serial.print("Tan1(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_tan(secondPosit);
-  Serial.print("Tan2 (");
+  Serial.print("Tan2(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_atan(firstPosit);
-  Serial.print("Atan1 (");
+  Serial.print("Atan1(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_atan(secondPosit);
-  Serial.print("Atan2 (");
+  Serial.print("Atan2(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4);
 
   op8 = posit8_t::posit8_next(firstPosit);
-  Serial.print("Next (");
+  Serial.print("Next(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); 
 
   op8 = posit8_t::posit8_prior(firstPosit);
-  Serial.print("Prior (");
+  Serial.print("Prior(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); //*/
 
   op8 = posit8_t::posit8_sign(firstPosit);
-  Serial.print("Sign (");
+  Serial.print("Sign(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); //*/
 
   op8 = posit8_t::posit8_abs(firstPosit);
-  Serial.print("Abs (");
+  Serial.print("Abs(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); 
 
-  op8 = posit8_t::posit8_neg(firstPosit);
-  Serial.print("Neg (");
+  op8 = posit8_t::posit8_negate(firstPosit);
+  Serial.print("Negate(");
   Serial.print(op8.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op8),4); //*/
@@ -412,8 +412,8 @@ void loop() {
   Serial.print(") ");
   Serial.println(posit2float(op16),15);
 
-  op16 = posit16_neg(firstP16);
-  Serial.print("Neg(");
+  op16 = posit16_negate(firstP16);
+  Serial.print("Negate(");
   Serial.print(op16.value, BIN);
   Serial.print(") ");
   Serial.println(posit2float(op16),15); //*/
