@@ -751,7 +751,7 @@ class posit8_t { // Class definition
 #endif
 
     uint8_t mantissa8 = tempMantissa;
-    return posit8_t(stempSgn,tempExponent,mantissa8);
+    return posit8_t(tempSign,tempExponent,mantissa8);
   } // end of posit8_mul function definition
 
   static posit8_t posit8_div(posit8_t a, posit8_t b) { // args by ref doesn't compile
@@ -1002,3 +1002,4 @@ float posit2float(posit8_t p) {
   return tempValue.tempFloat;
 #endif
 } // end of posit2float 8-bit
+
