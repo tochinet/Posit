@@ -28,14 +28,14 @@ CURRENT STATUS
 
 CURRENT and FUTURE work ideas  
   WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (done for posit2float)
+  TODO : consider HUB concept (see https://ieeexplore.ieee.org/document/10226419)
   TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
   TODO : improve precision of trigonometric routines (now only precise around zero)
   DROPPPED : add p10_t class for byte storage of 10bit [0..1[ numbers (probability)
      - this is nonstandard and ... maybe not very useful since posits with ES=0 is linear between -1 and 1
   TODO Evaluate interest of posit8_t, posit16_t but also qposit8_t (quadruplet) for 32-bit architectures without FPU
   TODO verify and improve compliance with standard (for example sign(NaR) is NaR)
-  TODO consider HUB concept (see https://ieeexplore.ieee.org/document/10226419)
-
+  
   Copyright (c) 2024-2025 Christophe Vermeulen
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -59,9 +59,9 @@ CURRENT and FUTURE work ideas
 See https://github.com/tochinet/Posit/ for more details on Posits and the library.
 ************************************************************************************/
 
-#ifndef EPSILON     // Define EPSILON in sketch for rounding down ...
-#define EPSILON 0.0 // ... results smaller than EPSILON to zero in Posit8 ... 
-#endif              // ... and EPSILON^2 in Posit16 arithmetic
+#ifndef EPSILON     // Define EPSILON in sketch for rounding down results smaller than ...
+#define EPSILON 0.0 // ... EPSILON to zero in Posit8 and EPSILON^2 in Posit16 arithmetic 
+#endif
 // This may allow to speed up RL algorithms and reduce memory usage of sketch, even if 
 // explicitly not recommended according to https://posithub.org/docs/Posits4.pdf p.7.
 
@@ -71,6 +71,7 @@ See https://github.com/tochinet/Posit/ for more details on Posits and the librar
 #define ES16 2 // Posit 16 always have two-bits exponent field
 //#define ES32 2 // No support envisioned for Posit32.
 //#define NOTRIG // uncomment or put in sketch to exclude trig routines
+//#define HUB    // uncomment or put in sketch to select Half Unit Bias variant
 
 #ifdef DEBUG
 char s[30]; // temporary C string for Serial debug using sprintf
@@ -82,7 +83,7 @@ struct splitPosit { // struct not used yet. TODO check if it reduces or increase
   uint16_t mantissa; // worth using 16 bits to share struct between 8 and 16 bits
 }; 
 
-class posit8_t; // Forward-declared for casting from posit8_t to posit16_t
+class posit8_t; // Forward-declared needed to allow casting from posit8_t to posit16_t
 
 class posit16_t {
   private:
@@ -95,6 +96,7 @@ class posit16_t {
 
   // construct from parts (sign, 2's power and mantissa without leading 1)
   posit16_t(bool& sign, int8_t powerof2, uint16_t& tempMantissa) {
+    // TODO maybe use splitPosit& struct ? Need to copy powerof2
     // powerof2 passed by value, as it will be modified
     // sign and mantissa passed by reference to avoid copy, they won't be modified.
     // REJECTED using mantissa with leading one. But mantissa might be moved down someday
@@ -128,7 +130,7 @@ class posit16_t {
       if (esBits & 1) tempResult |= (1 << bitCount);
       bitCount--;
     }
-    //if (bitCount >= 0) { // still space for mantissa
+    //if (bitCount >= 0) { // still space for mantissa // REDONDANT, REMOVED
     int8_t mantissacount = 1;
     while (bitCount-->= 0) {
       if (tempMantissa & (1 << (16 - mantissacount++))) // 15 if leading one
@@ -144,7 +146,7 @@ class posit16_t {
       uint32_t tempInt; // little-endian in AVR
       uint8_t tempBytes[4]; // [3] includes sign and exponent MSBs
     } tempValue;
-    bool sign = 0;
+    bool sign = 0; // TODO maybe use splitPosit& struct ?
 
     this->value = 0;
     if (v < 0) { // negative numbers
@@ -164,7 +166,7 @@ class posit16_t {
     uint16_t mantissa = (tempValue.tempBytes[2] << 8) + tempValue.tempBytes[1];
     // 7 and >>1 if leading one, but no need to "recreate" leading one
 
-    this->value = posit16_t(sign, exponent, mantissa).value;
+    this->value = posit16_t(sign, exponent, mantissa).value; // TODO maybe use splitPosit& struct ?
   }
 
   posit16_t(double v = 0) { // Construct from double by casting to float32
@@ -291,7 +293,7 @@ class posit16_t {
   static posit16_t posit16_mul(posit16_t a, posit16_t b) {
     bool aSign, bSign, tempSign=0;
     int8_t aExponent, bExponent, tempExponent;
-    uint16_t aMantissa, bMantissa, tempMantissa;
+    uint16_t aMantissa, bMantissa, tempMantissa; // TODO maybe use splitPosit& struct ?
     uint8_t esBits;
     int8_t bitCount; // posit bit counter
     uint16_t tempResult = 0;
@@ -1008,5 +1010,6 @@ float posit2float(posit8_t p) {
   return tempValue.tempFloat;
 #endif
 } // end of posit2float 8-bit
+
 
 
