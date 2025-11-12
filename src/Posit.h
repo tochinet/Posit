@@ -2,26 +2,31 @@
 
 Posit Library for Arduino v0.1.3 (not yet released)
 
-  This library provides posit8 and posit16 floating point arithmetic support
-  for the Arduino environment, especially the memory-limited 8-bit AVR boards.
-  Posits are a more efficient and more precise alternative to IEEE754 floats.
+This library provides posit8 and posit16 floating point arithmetic support
+for the Arduino environment, especially the memory-limited 8-bit AVR boards.
+Posits are a more efficient and more precise alternative to IEEE754 floats.
 
-  Major design goals are :
+MAJOR DESIGN PRINCIPLES
+We want the library to follow following principles :
   - Small size, both in code/program memory and RAM usage
   - Simplicity, restricting the library to 8 and 16 bits posits and most common operations
   - Useful, explanatory comments in the library
  
-  As corollary, major non-goals are :
+As corollary, major non-goals are :
   - Support for 32bits posits (not enough added value compared with existing floats)
   - Full compliance with the Posit-2022 standard (too many functions)
   - Complex rounding algorithms (rounding to nearest even requires handling G, R and S bits)
   - Support of quire (very long accumulator)
   - Use of templates, boilerplate, etc. bloating code memory
 
-  CURRENT STATUS
-  Provides + - * / sqrt next prior sign abs negate
-  Provides trigonometric routines sin cos tan atan with conditional compilation
-  Changed the class names to posit8_t and posit16_t for compatibility with other implementations
+CURRENT STATUS
+  - Constructors from raw values, float, signed int
+  - 4 operations ( + - * / ) with operator overloading
+  - square root (using NR)
+  - next prior sign abs negate
+  - trigonometric routines (sin cos tan atan) with explicit conditional compilation
+
+CURRENT and FUTURE work ideas  
   WIP : reduce library size if ES8 == ES16 by using 16-bit code for both (done for posit2float)
   TODO : add sin/cos/tan PI*x using Taylor or Chebyshev
   TODO : improve precision of trigonometric routines (now only precise around zero)
@@ -29,6 +34,7 @@ Posit Library for Arduino v0.1.3 (not yet released)
      - this is nonstandard and ... maybe not very useful since posits with ES=0 is linear between -1 and 1
   TODO Evaluate interest of posit8_t, posit16_t but also qposit8_t (quadruplet) for 32-bit architectures without FPU
   TODO verify and improve compliance with standard (for example sign(NaR) is NaR)
+  TODO consider HUB concept (see https://ieeexplore.ieee.org/document/10226419)
 
   Copyright (c) 2024-2025 Christophe Vermeulen
 
@@ -1002,4 +1008,5 @@ float posit2float(posit8_t p) {
   return tempValue.tempFloat;
 #endif
 } // end of posit2float 8-bit
+
 
